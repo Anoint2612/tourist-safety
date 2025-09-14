@@ -1,0 +1,98 @@
+import { MD3LightTheme, MD3DarkTheme } from 'react-native-paper';
+
+const lightTheme = {
+  ...MD3LightTheme,
+  colors: {
+    ...MD3LightTheme.colors,
+    primary: '#2196F3',
+    primaryContainer: '#BBDEFB',
+    secondary: '#FF9800',
+    secondaryContainer: '#FFE0B2',
+    tertiary: '#4CAF50',
+    tertiaryContainer: '#C8E6C9',
+    surface: '#FFFFFF',
+    surfaceVariant: '#F5F5F5',
+    background: '#FAFAFA',
+    error: '#F44336',
+    errorContainer: '#FFCDD2',
+    onPrimary: '#FFFFFF',
+    onSecondary: '#FFFFFF',
+    onTertiary: '#FFFFFF',
+    onSurface: '#212121',
+    onBackground: '#212121',
+    onError: '#FFFFFF',
+    outline: '#BDBDBD',
+    shadow: '#000000',
+    inverseSurface: '#303030',
+    inverseOnSurface: '#FAFAFA',
+    inversePrimary: '#90CAF9',
+    elevation: {
+      level0: 'transparent',
+      level1: '#FFFFFF',
+      level2: '#FFFFFF',
+      level3: '#FFFFFF',
+      level4: '#FFFFFF',
+      level5: '#FFFFFF',
+    },
+    // Custom colors
+    success: '#4CAF50',
+    warning: '#FF9800',
+    info: '#2196F3',
+    text: '#212121',
+    textSecondary: '#757575',
+    border: '#E0E0E0',
+    notification: '#FF5722',
+  },
+  roundness: 8,
+};
+
+const dTheme = {
+  ...MD3DarkTheme,
+  colors: {
+    ...MD3DarkTheme.colors,
+    primary: '#90CAF9',
+    primaryContainer: '#1976D2',
+    secondary: '#FFB74D',
+    secondaryContainer: '#F57C00',
+    tertiary: '#81C784',
+    tertiaryContainer: '#388E3C',
+    surface: '#121212',
+    surfaceVariant: '#1E1E1E',
+    background: '#000000',
+    error: '#CF6679',
+    errorContainer: '#B71C1C',
+    onPrimary: '#000000',
+    onSecondary: '#000000',
+    onTertiary: '#000000',
+    onSurface: '#FFFFFF',
+    onBackground: '#FFFFFF',
+    onError: '#000000',
+    outline: '#424242',
+    shadow: '#000000',
+    inverseSurface: '#E0E0E0',
+    inverseOnSurface: '#1C1B1F',
+    inversePrimary: '#1976D2',
+    elevation: {
+      level0: 'transparent',
+      level1: '#1F1F1F',
+      level2: '#2A2A2A',
+      level3: '#363636',
+      level4: '#373737',
+      level5: '#383838',
+    },
+    // Custom colors
+    success: '#81C784',
+    warning: '#FFB74D',
+    info: '#90CAF9',
+    text: '#FFFFFF',
+    textSecondary: '#B0B0B0',
+    border: '#424242',
+    notification: '#FF7043',
+  },
+  roundness: 8,
+};
+
+export const theme = lightTheme;
+export const darkTheme = dTheme;
+
+export default theme;
