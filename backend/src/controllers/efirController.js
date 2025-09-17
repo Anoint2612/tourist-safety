@@ -5,7 +5,7 @@ const { generateNortheastIndiaCoordinates, generateTouristAreaCoordinates } = re
 // List all pending EFIRs
 exports.listPending = async (req, res) => {
   try {
-    const items = await Efir.find({ status: { $in: ["pending", "verified", "assigned"] } }).sort({ createdAt: -1 });
+    const items = await Efir.find({ status: { $in: ["pending", "verified", "assigned", "sent"] } }).sort({ createdAt: -1 });
     res.json(items);
   } catch (err) {
     console.error("Error fetching pending EFIRs:", err);

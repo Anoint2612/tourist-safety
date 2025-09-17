@@ -85,6 +85,10 @@ export default function EFIRPage() {
     } catch (_) {}
   };
   const sendCopy = async (item) => {
+    if (item.status === 'sent') {
+      alert('This FIR has already been sent.');
+      return;
+    }
     try {
       const r = await api.post(endpoints.efirSend(item._id));
       const updated = r.data;
