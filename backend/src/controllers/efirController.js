@@ -133,16 +133,16 @@ exports.reject = async (req, res) => {
 // Create EFIR (allows tourists to file reports)
 exports.createEfir = async (req, res) => {
   try {
-    const { filedBy, description, phone, useRandomLocation = true } = req.body;
+    const { filedBy, description, phone, touristId, geoLocation} = req.body;
     if (!filedBy || !description || !phone) {
       return res.status(400).json({ error: 'filedBy, description and phone are required' });
     }
 
-    const geoLocation = useRandomLocation
-      ? generateTouristAreaCoordinates()
-      : (req.body.geoLocation || generateTouristAreaCoordinates());
+    // const geoLocation = useRandomLocation
+    //   ? generateTouristAreaCoordinates()
+    //   : (req.body.geoLocation || generateTouristAreaCoordinates());
 
-    const touristId = 'T' + Date.now().toString(36) + Math.random().toString(36).slice(2, 9).toUpperCase();
+    // const touristId = 'T' + Date.now().toString(36) + Math.random().toString(36).slice(2, 9).toUpperCase();
 
     const newEfir = new Efir({
       filedBy,
