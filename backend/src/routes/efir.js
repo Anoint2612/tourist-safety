@@ -16,4 +16,6 @@ router.delete('/:id', auth, efirController.reject);
 // New creation route (no auth needed for tourist reporting)
 router.post('/', efirController.createEfir);
 
+router.get('/:id', efirController.getEfirById);
+
 module.exports = router;

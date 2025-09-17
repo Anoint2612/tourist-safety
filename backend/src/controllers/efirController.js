@@ -164,3 +164,20 @@ exports.createEfir = async (req, res) => {
     res.status(500).json({ error: 'Failed to create EFIR' });
   }
 };
+
+exports.getEfirById = async (req, res) => {
+  try {
+    const tourist_id = req.params.tourist_id;
+    // if (!mongoose.Types.ObjectId.isValid(tourist_id)) {
+    //   return res.status(400).json({ error: "Invalid EFIR ID." });
+    // }
+    const item = await Efir.find({ touristId: tourist_id }).sort({ createdAt: -1 });
+    if (!item) {
+      return res.status(404).json({ error: "EFIR not found." });
+    }
+    res.json(item);
+  } catch (err) {
+    console.error("Error fetching EFIR by ID:", err);
+    res.status(500).json({ error: "An error occurred while fetching the EFIR." });
+  }
+};
