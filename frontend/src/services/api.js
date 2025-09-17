@@ -15,10 +15,28 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+export const createEfir = async (efirData) => {
+  try {
+    const response = await api.post('/efir', {
+      filedBy: efirData.filedBy,
+      description: efirData.description,
+      phone: efirData.phone,
+      useRandomLocation: true // This will trigger coordinate generation
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating EFIR:', error);
+    throw error;
+  }
+};
 export const endpoints = {
   alerts: "/alerts",
   efirPending: "/efir/pending",
   efirVerify: (id) => `/efir/verify/${id}`,
+  efirAssign: (id) => `/efir/assign/${id}`,
+  efirSend: (id) => `/efir/send/${id}`,
+  efirDelete: (id) => `/efir/${id}`,
+  inspectors: "/inspectors",
 };
 
 export default api;

@@ -15,10 +15,12 @@ app.get("/", (req, res) => res.send("Backend running"));
 const authRoutes = require("./src/routes/auth");
 const alertsRoutes = require("./src/routes/alerts");
 const efirRoutes = require("./src/routes/efir");
+const inspectorsRoutes = require("./src/routes/inspectors");
 
 app.use("/auth", authRoutes);
 app.use("/alerts", alertsRoutes);
 app.use("/efir", efirRoutes);
+app.use("/inspectors", inspectorsRoutes);
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {

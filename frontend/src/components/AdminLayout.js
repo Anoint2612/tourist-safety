@@ -11,6 +11,13 @@ export default function AdminLayout({ children }) {
             <button
               className="btn"
               onClick={() => {
+                window.location.href = "/efir/create";
+              }}
+              style={{ marginRight: 8 }}
+            >Create FIR</button>
+            <button
+              className="btn"
+              onClick={() => {
                 localStorage.removeItem("admin_token");
                 window.location.href = "/login";
               }}

@@ -12,11 +12,14 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.18.1"
+    "leaflet": "^1.9.4",
+    "mongoose": "^8.18.1",
+    "twilio": "^5.9.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
