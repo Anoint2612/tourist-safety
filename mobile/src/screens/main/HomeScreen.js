@@ -6,7 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 
 // Sample data - in a real app, this would come from your backend
 const sampleUser = {
-  name: 'John Doe',
+  name: 'mitesh',
   avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
   safetyScore: 85,
   activeTrip: {

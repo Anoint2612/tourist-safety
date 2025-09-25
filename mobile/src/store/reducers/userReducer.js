@@ -13,6 +13,7 @@ const initialState = {
     notifications: true,
     locationSharing: false,
     shareWithPolice: false,
+    language: 'en', // default language
   },
   safetyScore: 100,
   safetyHistory: [],

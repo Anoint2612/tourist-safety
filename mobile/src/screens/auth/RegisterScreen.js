@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   View, 
   StyleSheet, 
@@ -72,7 +73,8 @@ const RegisterSchema = Yup.object().shape({
 const RegisterScreen = ({ navigation }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
-  
+  const { t } = useTranslation();
+
   // State and selectors
   const authError = useSelector(selectAuthError);
   const isAuthenticated = useSelector(selectIsAuthenticated);
@@ -224,11 +226,11 @@ const RegisterScreen = ({ navigation }) => {
             style={styles.logo} 
             resizeMode="contain"
           />
-          <Text style={[styles.title, { color: theme.colors.primary }]}>
-            Create Account
+          <Text style={[styles.title, { color: theme.colors.primary }]}> 
+            {t('register')}
           </Text>
-          <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-            Fill in your details to get started
+          <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}> 
+            {t('fill_details_to_get_started') || 'Fill in your details to get started'}
           </Text>
         </View>
 
@@ -248,8 +250,8 @@ const RegisterScreen = ({ navigation }) => {
               {/* Role Selection */}
               <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
                 <Card.Content>
-                  <Title style={[styles.sectionTitle, { color: theme.colors.primary }]}>
-                    Select Your Role
+                  <Title style={[styles.sectionTitle, { color: theme.colors.primary }]}> 
+                    {t('role')}
                   </Title>
                   <View style={styles.roleContainer}>
                     <TouchableOpacity 
@@ -271,7 +273,7 @@ const RegisterScreen = ({ navigation }) => {
                         styles.roleText, 
                         { color: selectedRole === 'tourist' ? theme.colors.primary : theme.colors.text }
                       ]}>
-                        Tourist
+                        {t('tourist')}
                       </Text>
                     </TouchableOpacity>
                     
@@ -294,7 +296,7 @@ const RegisterScreen = ({ navigation }) => {
                         styles.roleText, 
                         { color: selectedRole === 'guide' ? theme.colors.primary : theme.colors.text }
                       ]}>
-                        Guide
+                        {t('guide')}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -304,14 +306,14 @@ const RegisterScreen = ({ navigation }) => {
               {/* Personal Information */}
               <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
                 <Card.Content>
-                  <Title style={[styles.sectionTitle, { color: theme.colors.primary }]}>
-                    Personal Information
+                  <Title style={[styles.sectionTitle, { color: theme.colors.primary }]}> 
+                    {t('user_info')}
                   </Title>
                   
                   {/* Name Input */}
                   <View style={styles.inputContainer}>
                     <TextInput
-                      label="Full Name"
+                      label={t('name')}
                       mode="outlined"
                       left={<TextInput.Icon icon={({ color, size }) => (
                         <MaterialDesignIcons name="account-outline" size={size} color={color} />
@@ -330,7 +332,7 @@ const RegisterScreen = ({ navigation }) => {
                   {/* Email Input */}
                   <View style={styles.inputContainer}>
                     <TextInput
-                      label="Email"
+                      label={t('email')}
                       mode="outlined"
                       left={<TextInput.Icon icon={({ color, size }) => (
                         <MaterialDesignIcons name="email-outline" size={size} color={color} />
@@ -350,7 +352,7 @@ const RegisterScreen = ({ navigation }) => {
                   {/* Phone Input */}
                   <View style={styles.inputContainer}>
                     <TextInput
-                      label="Phone Number"
+                      label={t('phone')}
                       mode="outlined"
                       left={<TextInput.Icon icon={({ color, size }) => (
                         <MaterialDesignIcons name="phone-outline" size={size} color={color} />
@@ -372,17 +374,17 @@ const RegisterScreen = ({ navigation }) => {
               {/* KYC Information */}
               <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
                 <Card.Content>
-                  <Title style={[styles.sectionTitle, { color: theme.colors.primary }]}>
-                    KYC Verification
+                  <Title style={[styles.sectionTitle, { color: theme.colors.primary }]}> 
+                    {t('kvc_verify')}
                   </Title>
-                  <Paragraph style={[styles.sectionDescription, { color: theme.colors.textSecondary }]}>
-                    We need to verify your identity for your safety and security
+                  <Paragraph style={[styles.sectionDescription, { color: theme.colors.textSecondary }]}> 
+                    {t('kyc_info') || 'We need to verify your identity for your safety and security'}
                   </Paragraph>
                   
                   {/* Aadhaar Number Input */}
                   <View style={styles.inputContainer}>
                     <TextInput
-                      label="Aadhaar Number"
+                      label={t('aadhaar_number')}
                       mode="outlined"
                       left={<TextInput.Icon icon={({ color, size }) => (
                         <MaterialDesignIcons name="card-account-details-outline" size={size} color={color} />
@@ -398,7 +400,7 @@ const RegisterScreen = ({ navigation }) => {
                       {errors.aadhaarNumber}
                     </HelperText>
                     <HelperText type="info" visible={true}>
-                      Your Aadhaar number will be securely hashed and stored
+                      {t('aadhaar_info') || 'Your Aadhaar number will be securely hashed and stored'}
                     </HelperText>
                   </View>
                 </Card.Content>
@@ -409,11 +411,11 @@ const RegisterScreen = ({ navigation }) => {
                 <Card.Content>
                   <View style={styles.emergencyHeader}>
                     <View>
-                      <Title style={[styles.sectionTitle, { color: theme.colors.primary }]}>
-                        Emergency Contacts
+                      <Title style={[styles.sectionTitle, { color: theme.colors.primary }]}> 
+                        {t('emergency_contacts')}
                       </Title>
                       <Paragraph style={{ color: theme.colors.textSecondary, marginTop: -5 }}>
-                        Add at least one emergency contact
+                        {t('add_contact')}
                       </Paragraph>
                     </View>
                     {!showEmergencyForm && (
@@ -423,7 +425,7 @@ const RegisterScreen = ({ navigation }) => {
                         style={styles.addButton}
                         icon="plus"
                       >
-                        Add
+                        {t('add_contact')}
                       </Button>
                     )}
                   </View>
@@ -470,14 +472,14 @@ const RegisterScreen = ({ navigation }) => {
                       />
                       <View style={styles.formButtons}>
                         <Button mode="outlined" onPress={() => setShowEmergencyForm(false)}>
-                          Cancel
+                          {t('cancel')}
                         </Button>
                         <Button mode="contained" onPress={() => {
                           setEmergencyContacts([...emergencyContacts, newContact]);
                           setShowEmergencyForm(false);
                           setNewContact({ name: '', phone: '', relation: '' });
                         }}>
-                          Add
+                          {t('add_contact')}
                         </Button>
                       </View>
                     </View>
@@ -488,14 +490,14 @@ const RegisterScreen = ({ navigation }) => {
               {/* Security Information */}
               <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
                 <Card.Content>
-                  <Title style={[styles.sectionTitle, { color: theme.colors.primary }]}>
-                    Security
+                  <Title style={[styles.sectionTitle, { color: theme.colors.primary }]}> 
+                    {t('security')}
                   </Title>
                   
                   {/* Password Input */}
                   <View style={styles.inputContainer}>
                     <TextInput
-                      label="Password"
+                      label={t('password')}
                       mode="outlined"
                       left={<TextInput.Icon icon={({ color, size }) => (
                         <MaterialIcons name="lock-outline" size={size} color={color} />
@@ -526,7 +528,7 @@ const RegisterScreen = ({ navigation }) => {
                   {/* Confirm Password Input */}
                   <View style={styles.inputContainer}>
                     <TextInput
-                      label="Confirm Password"
+                      label={t('confirm_password')}
                       mode="outlined"
                       left={<TextInput.Icon icon={({ color, size }) => (
                         <MaterialDesignIcons name="lock-check-outline" size={size} color={color} />
@@ -564,19 +566,19 @@ const RegisterScreen = ({ navigation }) => {
                   color={theme.colors.primary}
                 />
                 <Text style={styles.termsText}>
-                  I agree to the{' '}
+                  {t('agree_terms') || 'I agree to the'}{' '}
                   <Text 
                     style={[styles.termsLink, { color: theme.colors.primary }]}
                     onPress={() => setShowTermsModal(true)}
                   >
-                    Terms & Conditions
+                    {t('terms_and_conditions') || 'Terms & Conditions'}
                   </Text>
                   {' '}and{' '}
                   <Text 
                     style={[styles.termsLink, { color: theme.colors.primary }]}
                     onPress={() => setShowTermsModal(true)}
                   >
-                    Privacy Policy
+                    {t('privacy_policy') || 'Privacy Policy'}
                   </Text>
                 </Text>
               </View>
@@ -596,13 +598,13 @@ const RegisterScreen = ({ navigation }) => {
                   
                   // Check terms acceptance first
                   if (!acceptedTerms) {
-                    Alert.alert('Terms Required', 'Please accept the terms and conditions');
+                    Alert.alert(t('terms_required') || 'Terms Required', t('accept_terms') || 'Please accept the terms and conditions');
                     return;
                   }
                   
                   // Check role selection
                   if (!selectedRole) {
-                    Alert.alert('Role Required', 'Please select your role (Tourist or Guide)');
+                    Alert.alert(t('role_required') || 'Role Required', t('select_role') || 'Please select your role (Tourist or Guide)');
                     return;
                   }
                   
@@ -616,17 +618,17 @@ const RegisterScreen = ({ navigation }) => {
                 loading={isSubmitting}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Creating Account...' : 'Create Account'}
+                {isSubmitting ? t('creating_account') || 'Creating Account...' : t('register')}
               </Button>
 
               {/* Login Link */}
               <View style={styles.loginContainer}>
                 <Text style={{ color: theme.colors.textSecondary }}>
-                  Already have an account?{' '}
+                  {t('already_have_account') || 'Already have an account?'}{' '}
                 </Text>
                 <TouchableOpacity onPress={() => navigation.navigate('Login')}>
                   <Text style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
-                    Sign In
+                    {t('login')}
                   </Text>
                 </TouchableOpacity>
               </View>

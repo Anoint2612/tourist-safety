@@ -3,6 +3,7 @@ import { Platform, PermissionsAndroid } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import { View, StyleSheet } from 'react-native';
 import { Appbar, useTheme, Text, Avatar, Modal, Portal, Button, TextInput } from 'react-native-paper';
+import { getCurrentLocation } from '../../services/api';
 
 const CustomHeader = ({ navigation, route, options, back }) => {
   const theme = useTheme();
@@ -15,9 +16,9 @@ const CustomHeader = ({ navigation, route, options, back }) => {
   const [loadingStatus, setLoadingStatus] = useState(false);
   // Simulated user profile (replace with real user context)
   const userProfile = {
-    userName: 'John Doe',
-    touristId: 'T12345',
-    userPhone: '+1234567890',
+    userName: 'mitesh',
+    touristId: 'T13423',
+    userPhone: '+916361332898',
   };
 
   // Don't show header for screens that explicitly set headerShown: false
@@ -148,10 +149,10 @@ const CustomHeader = ({ navigation, route, options, back }) => {
                   return;
                 }
               }
-              
-              const latitude = 0;
-              const longitude = 0;
-              const nearestCity = 'Unknown'; // Ideally use a reverse geocoding service
+              // const { latitude, longitude } = await getCurrentLocation();
+              const latitude = 26.115103;
+              const longitude = 91.703239;
+              const nearestCity = 'Unknown'; // Use a reverse geocoding service
               const payload = {
                 filedBy: userProfile.userName,
                 description: form.description,

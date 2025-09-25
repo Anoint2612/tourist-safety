@@ -15,10 +15,21 @@ export const updateUserProfile = createAsyncThunk(
 );
 
 // Async thunk for updating user preferences
+// updateUserPreferences already supports any preferences, including language
 export const updateUserPreferences = createAsyncThunk(
   'user/updatePreferences',
   async (preferences, { rejectWithValue }) => {
     try {
+      // If language is present, persist it locally as well (optional)
+      if (preferences.language) {
+        // Optionally persist to AsyncStorage for app reload
+        try {
+          const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+          await AsyncStorage.setItem('appLanguage', preferences.language);
+        } catch (e) {
+          // Ignore local storage errors
+        }
+      }
       const response = await userAPI.updatePreferences(preferences);
       return response.data;
     } catch (error) {

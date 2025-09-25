@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '../../hooks/useLanguage';
+import { useTranslation } from 'react-i18next';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { 
   Text, 
@@ -24,13 +26,16 @@ const ProfileScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const { user } = useSelector(state => state.auth);
   const { preferences, emergencyContacts } = useSelector(state => state.user);
-  
+  const { language, setLanguage } = useLanguage();
+  const { t } = useTranslation();
+
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
     email: user?.email || '',
     phone: user?.phone || '',
   });
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
 
   const handleLogout = () => {
     Alert.alert(
@@ -165,16 +170,15 @@ const ProfileScreen = ({ navigation }) => {
       </Card>
 
       {/* Settings */}
-      <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-        <Card.Content>
-          <Title style={[styles.cardTitle, { color: theme.colors.primary }]}>
-            Settings
+      <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}> 
+        <Card.Content> 
+          <Title style={[styles.cardTitle, { color: theme.colors.primary }]}> 
+            {t('settings')}
           </Title>
-          
-          
+
           <List.Item
-            title="Notifications"
-            description="Push notifications"
+            title={t('notifications')}
+            description={t('push_notifications') || 'Push notifications'}
             left={(props) => <List.Icon {...props} icon="bell" />}
             right={() => (
               <Switch
@@ -183,12 +187,12 @@ const ProfileScreen = ({ navigation }) => {
               />
             )}
           />
-          
+
           <Divider />
-          
+
           <List.Item
-            title="Location Sharing"
-            description="Share location with authorities"
+            title={t('location_sharing') || 'Location Sharing'}
+            description={t('share_location_with_authorities') || 'Share location with authorities'}
             left={(props) => <List.Icon {...props} icon="map-marker" />}
             right={() => (
               <Switch
@@ -197,12 +201,12 @@ const ProfileScreen = ({ navigation }) => {
               />
             )}
           />
-          
+
           <Divider />
-          
+
           <List.Item
-            title="Share with Police"
-            description="Allow police access to your data"
+            title={t('share_with_police') || 'Share with Police'}
+            description={t('allow_police_access') || 'Allow police access to your data'}
             left={(props) => <List.Icon {...props} icon="shield" />}
             right={() => (
               <Switch
@@ -211,6 +215,44 @@ const ProfileScreen = ({ navigation }) => {
               />
             )}
           />
+
+          <Divider />
+
+          <List.Item
+            title={t('change_language') || 'Change Language'}
+            description={t('select_language')}
+            left={(props) => <List.Icon {...props} icon="translate" />}
+            onPress={() => setShowLanguageModal(true)}
+            right={() => (
+              <Chip style={{ backgroundColor: '#eee' }}>{language === 'en' ? t('english') : t('hindi')}</Chip>
+            )}
+          />
+
+          {/* Language selection modal */}
+          {showLanguageModal && (
+            <View style={{ backgroundColor: '#fff', padding: 20, borderRadius: 12, marginTop: 16 }}>
+              <Title style={{ marginBottom: 12 }}>{t('select_language')}</Title>
+              <Button
+                mode={language === 'en' ? 'contained' : 'outlined'}
+                onPress={() => { setLanguage('en'); setShowLanguageModal(false); }}
+                style={{ marginBottom: 8 }}
+              >
+                {t('english')}
+              </Button>
+              <Button
+                mode={language === 'hi' ? 'contained' : 'outlined'}
+                onPress={() => { setLanguage('hi'); setShowLanguageModal(false); }}
+              >
+                {t('hindi')}
+              </Button>
+              <Button
+                onPress={() => setShowLanguageModal(false)}
+                style={{ marginTop: 12 }}
+              >
+                {t('cancel')}
+              </Button>
+            </View>
+          )}
         </Card.Content>
       </Card>
 

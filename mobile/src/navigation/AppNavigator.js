@@ -20,6 +20,7 @@ import ProfileScreen from '../screens/profile/ProfileScreen';
 import MapScreen from '../screens/map/MapScreen';
 import PanicScreen from '../screens/emergency/PanicScreen';
 import AdminDashboard from '../screens/admin/AdminDashboard';
+import LanguageSelection from '../screens/auth/LanguageSelection'
 
 // Import components
 import CustomHeader from '../components/common/CustomHeader';
@@ -33,6 +34,7 @@ const Drawer = createDrawerNavigator();
 // Auth Stack
 const AuthStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Screen name="LanguageSelection" component={LanguageSelection} />
     <Stack.Screen name="Login" component={LoginScreen} />
     <Stack.Screen name="Register" component={RegisterScreen} />
     <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
