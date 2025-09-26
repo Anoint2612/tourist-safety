@@ -375,7 +375,7 @@ const RegisterScreen = ({ navigation }) => {
               <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
                 <Card.Content>
                   <Title style={[styles.sectionTitle, { color: theme.colors.primary }]}> 
-                    {t('kvc_verify')}
+                    {t('kyc_verify')}
                   </Title>
                   <Paragraph style={[styles.sectionDescription, { color: theme.colors.textSecondary }]}> 
                     {t('kyc_info') || 'We need to verify your identity for your safety and security'}

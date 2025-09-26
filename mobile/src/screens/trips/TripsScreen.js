@@ -302,7 +302,7 @@ const TripsScreen = () => {
             mode="contained" 
             onPress={() => {
               setShowAddModal(false);
-              navigation.navigate('NewTrip');
+              navigation.navigate('TripSetup');
             }}
             style={{ marginTop: 16, backgroundColor: theme.colors.primary }}
             icon="plus"

@@ -20,7 +20,8 @@ import ProfileScreen from '../screens/profile/ProfileScreen';
 import MapScreen from '../screens/map/MapScreen';
 import PanicScreen from '../screens/emergency/PanicScreen';
 import AdminDashboard from '../screens/admin/AdminDashboard';
-import LanguageSelection from '../screens/auth/LanguageSelection'
+import LanguageSelection from '../screens/auth/LanguageSelection';
+import EFIRListScreen from '../screens/efir/EFIRListScreen';
 
 // Import components
 import CustomHeader from '../components/common/CustomHeader';
@@ -135,6 +136,17 @@ const MainTabs = () => {
 // Root Stack
 const RootStack = createNativeStackNavigator();
 
+// EFIR Stack
+const EFIRStack = () => (
+  <Stack.Navigator>
+    <Stack.Screen 
+      name="EFIRList" 
+      component={EFIRListScreen} 
+      options={{ title: 'My e-FIRs' }}
+    />
+  </Stack.Navigator>
+);
+
 // Main App Navigator
 const AppNavigator = () => {
   const [isLoading, setIsLoading] = React.useState(true);
@@ -199,6 +211,11 @@ const AppNavigator = () => {
         <RootStack.Screen
           name="MainTabs"
           component={MainTabs}
+          options={{ headerShown: false }}
+        />
+        <RootStack.Screen
+          name="EFIRList"
+          component={EFIRStack}
           options={{ headerShown: false }}
         />
         {/* Add modal screens here */}

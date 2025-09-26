@@ -1,4 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_BASE_URL } from '@env';
+
+const BASE_URL = API_BASE_URL || 'http://10.20.57.131:5000';
 
 // Simple token generation function
 const generateToken = () => {
@@ -685,6 +688,108 @@ export const adminAPI = {
     } catch (error) {
       console.error('Get heatmap data error:', error);
       throw new Error('Failed to fetch heatmap data');
+    }
+  },
+};
+
+// EFIR API
+export const efirAPI = {
+  // Create a new EFIR
+  createEfir: async (efirData) => {
+    try {
+      // Get current user data
+      const user = await getUserData();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Create EFIR object with user data
+      const newEfir = {
+        ...efirData,
+        filedBy: efirData.filedBy || user.userName || user.email?.split('@')[0] || 'Anonymous',
+        phone: efirData.phone || user.userPhone || '',
+        touristId: user.touristId || '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Make API call to backend
+      const response = await fetch(`${BASE_URL}/efir`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newEfir),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create EFIR');
+      }
+
+      const result = await response.json();
+      
+      return {
+        success: true,
+        data: result,
+        message: 'E-FIR created successfully'
+      };
+    } catch (error) {
+      console.error('Error creating E-FIR:', error);
+      throw new Error(error.message || 'Failed to create E-FIR');
+    }
+  },
+
+  // Get all EFIRs for the current user
+  getEfirs: async () => {
+    try {
+      const user = await getUserData();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const response = await fetch(`${BASE_URL}/efir/${user.id}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch EFIRs');
+      }
+
+      const userEfirs = await response.json();
+      
+      return {
+        success: true,
+        data: userEfirs || []
+      };
+    } catch (error) {
+      console.error('Error fetching E-FIRs:', error);
+      throw new Error(error.message || 'Failed to fetch E-FIRs');
+    }
+  },
+
+  // Get a single EFIR by ID
+  getEfir: async (efirId) => {
+    try {
+      const user = await getUserData();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const response = await fetch(`${BASE_URL}/efir/single/${efirId}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch EFIR');
+      }
+
+      const efir = await response.json();
+      
+      if (efir.userId !== user.id) {
+        throw new Error('Unauthorized access to EFIR');
+      }
+      
+      return {
+        success: true,
+        data: efir
+      };
+    } catch (error) {
+      console.error('Error fetching E-FIR:', error);
+      throw new Error(error.message || 'Failed to fetch E-FIR');
     }
   },
 };
