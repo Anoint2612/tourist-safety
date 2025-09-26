@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import AdminLayout from "../components/AdminLayout";
-import { api, endpoints } from "../services/api";
+import apiClient from "../services/api";
 
 export default function EFIRPage() {
   const [items, setItems] = useState([]);
@@ -19,7 +19,7 @@ export default function EFIRPage() {
       { _id: "f2", description: "Harassment reported on bus", filedBy: { name: "Anita Devi" }, geoLocation: { coordinates: [93.1, 26.35] }, status: "pending", victimPhone: "+91-98xxxxxxx" },
       { _id: "f3", description: "Lost baggage at station", filedBy: { name: "Karan Mehta" }, geoLocation: { coordinates: [92.6, 26.0] }, status: "pending", victimPhone: "+91-98xxxxxxx" },
     ];
-    api.get(endpoints.efirPending)
+    apiClient.nodeApi.get(apiClient.endpointsNode.efirPending)
       .then(r => { if (isMounted) setItems(Array.isArray(r.data) && r.data.length ? r.data : dummy); })
       .catch(() => { if (isMounted) setItems(dummy); })
       .finally(() => { if (isMounted) setLoading(false); });
@@ -28,7 +28,7 @@ export default function EFIRPage() {
 
   const [assigning, setAssigning] = useState({});
   const verify = async (id) => {
-    try { await api.post(endpoints.efirVerify(id)); } catch (_) {}
+    try { await apiClient.nodeApi.post(apiClient.endpointsNode.efirVerify(id)); } catch (_) {}
     setItems(prev => prev.filter(i => i._id !== id));
   };
   const rejectFIR = (id) => {
