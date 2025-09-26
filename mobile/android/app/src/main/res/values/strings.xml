@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">TouristSafetyApp</string>
+    <string name="google_maps_api_key">@string/google_maps_api_key</string>
 </resources>

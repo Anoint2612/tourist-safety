@@ -3,6 +3,7 @@ import "leaflet/dist/leaflet.css";
 import Dashboard from "./pages/Dashboard";
 import AlertsPage from "./pages/AlertsPage";
 import EFIRPage from "./pages/EFIRPage";
+import EFIRCreate from "./pages/EFIRCreate";
 import SOSPage from "./pages/SOSPage";
 import GeoPage from "./pages/GeoPage";
 import PolicePage from "./pages/PolicePage";
@@ -19,6 +20,7 @@ function App() {
         <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />
         <Route path="/efir" element={<ProtectedRoute><EFIRPage /></ProtectedRoute>} />
+        <Route path="/efir/create" element={<ProtectedRoute><EFIRCreate /></ProtectedRoute>} />
         <Route path="/sos" element={<ProtectedRoute><SOSPage /></ProtectedRoute>} />
         <Route path="/geo" element={<ProtectedRoute><GeoPage /></ProtectedRoute>} />
         <Route path="/police" element={<ProtectedRoute><PolicePage /></ProtectedRoute>} />

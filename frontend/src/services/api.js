@@ -16,6 +16,22 @@ const attachAuth = (config) => {
   return config;
 };
 
+// Optional helper kept for compatibility with main
+export const createEfir = async (efirData) => {
+  try {
+    const response = await nodeApi.post('/efir', {
+      filedBy: efirData.filedBy,
+      description: efirData.description,
+      phone: efirData.phone,
+      useRandomLocation: true
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating EFIR:', error);
+    throw error;
+  }
+};
+
 geoApi.interceptors.request.use(attachAuth);
 nodeApi.interceptors.request.use(attachAuth);
 
