@@ -55,6 +55,23 @@ class LocationEvent(Base):
     # Relationships
     tourist = relationship("Tourist", back_populates="location_events")
 
+class PoliceStation(Base):
+    __tablename__ = "police_stations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    address = Column(Text)
+    phone = Column(String(50))
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    geom = Column(Geometry("POINT", srid=4326), nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    assigned_alerts = relationship("Alert", back_populates="assigned_station")
+
 class Alert(Base):
     __tablename__ = "alerts"
     
@@ -71,8 +88,11 @@ class Alert(Base):
     is_resolved = Column(Boolean, default=False)
     resolved_at = Column(DateTime)
     resolved_by = Column(String(255))
+    assigned_station_id = Column(Integer, ForeignKey("police_stations.id"), nullable=True)
+    assigned_station_name = Column(String(255))
     timestamp = Column(DateTime, nullable=False, default=datetime.utcnow)
     
     # Relationships
     tourist = relationship("Tourist", back_populates="alerts")
     zone = relationship("GeoZone", back_populates="alerts")
+    assigned_station = relationship("PoliceStation", back_populates="assigned_alerts")

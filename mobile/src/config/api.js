@@ -1,5 +1,5 @@
-// const API_URL = 'http://localhost:6000/api/v1'; // For iOS simulator
-const API_URL = 'http://localhost:6000/api/v1'; // For Android emulator
+// Base URL for FastAPI backend
+const API_URL = 'http://localhost:8000/api/v1';
 
 export default {
   // Auth endpoints
@@ -22,14 +22,9 @@ export default {
     DIGITAL_ID: `${API_URL}/users/digital-id`,
   },
   
-  // Trip endpoints
-  TRIPS: {
-    BASE: `${API_URL}/trips`,
-    TRIP: (tripId) => `${API_URL}/trips/${tripId}`,
-    UPLOAD_PHOTO: (tripId) => `${API_URL}/trips/${tripId}/photo`,
-    UPDATE_LOCATION: (tripId) => `${API_URL}/trips/${tripId}/location`,
-    BY_STATUS: (status) => `${API_URL}/trips/status/${status}`,
-    BY_GUIDE: (guideId) => `${API_URL}/trips/guide/${guideId}`,
+  // Location update endpoint (used by tracking/SOS)
+  LOCATION: {
+    UPDATE: `${API_URL}/location`,
   },
   
   // Alert endpoints
@@ -39,13 +34,10 @@ export default {
     BY_STATUS: (status) => `${API_URL}/alerts/status/${status}`,
   },
   
-  // Geofence endpoints
-  GEOFENCE: {
-    BASE: `${API_URL}/geofence`,
-    CHECK: `${API_URL}/geofence/check`,
-    BY_RISK_LEVEL: (riskLevel) => `${API_URL}/geofence/risk/${riskLevel}`,
+  // Zones endpoints
+  ZONES: {
+    BASE: `${API_URL}/zones`,
   },
 };
 
-// export const SOCKET_URL = 'http://localhost:6000'; // For iOS simulator
-export const SOCKET_URL = 'http://localhost:6000'; // For Android emulator
+export const SOCKET_URL = 'ws://localhost:8000/ws/alerts';
