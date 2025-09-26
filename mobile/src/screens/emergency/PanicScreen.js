@@ -18,7 +18,7 @@ const PanicScreen = ({ navigation }) => {
   const [panicPressed, setPanicPressed] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [location, setLocation] = useState(null);
-  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);  
   
   const scaleAnim = new Animated.Value(1);
   const pulseAnim = new Animated.Value(1);

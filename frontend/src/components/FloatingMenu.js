@@ -23,6 +23,9 @@ export default function FloatingMenu({ center = false, large = false }) {
     : baseItemStyle;
   return (
     <div style={containerStyle}>
+      <div onClick={go("/alerts")} style={itemStyle} onMouseEnter={(e)=>{e.currentTarget.style.transform='translateY(-6px)'; e.currentTarget.style.boxShadow='0 8px 24px rgba(2,132,199,.35)';}} onMouseLeave={(e)=>{e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='';}}>
+        Alerts
+      </div>
       <div onClick={go("/sos")} style={itemStyle} onMouseEnter={(e)=>{e.currentTarget.style.transform='translateY(-6px)'; e.currentTarget.style.boxShadow='0 8px 24px rgba(2,132,199,.35)';}} onMouseLeave={(e)=>{e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='';}}>
         SOS Alerts
       </div>
@@ -31,6 +34,9 @@ export default function FloatingMenu({ center = false, large = false }) {
       </div>
       <div onClick={go("/geo")} style={itemStyle} onMouseEnter={(e)=>{e.currentTarget.style.transform='translateY(-6px)'; e.currentTarget.style.boxShadow='0 8px 24px rgba(2,132,199,.35)';}} onMouseLeave={(e)=>{e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='';}}>
         Geo-Fencing
+      </div>
+      <div onClick={go("/police")} style={itemStyle} onMouseEnter={(e)=>{e.currentTarget.style.transform='translateY(-6px)'; e.currentTarget.style.boxShadow='0 8px 24px rgba(2,132,199,.35)';}} onMouseLeave={(e)=>{e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='';}}>
+        Police
       </div>
     </div>
   );

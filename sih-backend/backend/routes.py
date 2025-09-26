@@ -7,12 +7,13 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 import logging
 
-from .models import GeoZone, LocationEvent, Alert, Tourist
+from .models import GeoZone, LocationEvent, Alert, Tourist, PoliceStation
 from .schemas import (
     ZoneCreate, ZoneUpdate, ZoneResponse, ZoneListResponse,
     TouristCreate, TouristUpdate, TouristResponse, TouristListResponse,
     LocationEventCreate, LocationEventResponse,
     AlertResponse, AlertUpdate, AlertListResponse,
+    PoliceStationCreate, PoliceStationResponse, PoliceStationListResponse,
     LocationUpdateResponse, ErrorResponse
 )
 from .database import get_db, check_point_in_polygon, create_or_get_tourist
@@ -53,7 +54,7 @@ async def create_zone(zone_data: ZoneCreate, db: AsyncSession = Depends(get_db))
             name=zone_data.name,
             description=zone_data.description,
             zone_type=zone_data.zone_type.value,
-            geom=zone_data.wkt_polygon,
+            geom=f"SRID=4326;{zone_data.wkt_polygon}",
             is_active=zone_data.is_active
         )
         
@@ -116,6 +117,48 @@ async def list_zones(
             detail="Failed to retrieve zones"
         )
 
+# GeoJSON Zones for frontend rendering
+@router.get("/zones/geo")
+async def list_zones_geo(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(200, ge=1, le=2000),
+    only_active: bool = Query(True),
+    db: AsyncSession = Depends(get_db)
+):
+    """Return zones with geometry as GeoJSON for map rendering."""
+    try:
+        base = "SELECT id, name, description, zone_type, is_active, created_at, updated_at, ST_AsGeoJSON(geom) AS geojson FROM zones"
+        where_clauses = []
+        params = {}
+        if only_active:
+            where_clauses.append("is_active = true")
+        if where_clauses:
+            base += " WHERE " + " AND ".join(where_clauses)
+        base += " ORDER BY created_at DESC OFFSET :skip LIMIT :limit"
+        params.update({"skip": skip, "limit": limit})
+
+        result = await db.execute(text(base), params)
+        rows = result.mappings().all()
+        zones = []
+        for r in rows:
+            try:
+                zones.append({
+                    "id": r["id"],
+                    "name": r["name"],
+                    "description": r["description"],
+                    "zone_type": r["zone_type"],
+                    "is_active": r["is_active"],
+                    "created_at": r["created_at"].isoformat() if r["created_at"] else None,
+                    "updated_at": r["updated_at"].isoformat() if r["updated_at"] else None,
+                    "geometry": r["geojson"]
+                })
+            except Exception:
+                continue
+        return {"zones": zones, "total": len(zones)}
+    except Exception as e:
+        logger.error(f"Error listing zones geo: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve zones geo")
+
 @router.get("/zones/{zone_id}", response_model=ZoneResponse)
 async def get_zone(zone_id: int, db: AsyncSession = Depends(get_db)):
     """Get a specific zone by ID"""
@@ -159,7 +202,10 @@ async def update_zone(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Invalid WKT polygon format: {str(e)}"
                 )
-        setattr(zone, field, value)
+            # Assign geometry with SRID
+            zone.geom = f"SRID=4326;{value}"
+        elif hasattr(zone, field):
+            setattr(zone, field, value)
     
     zone.updated_at = datetime.utcnow()
     await db.commit()
@@ -568,3 +614,106 @@ async def websocket_admin(websocket: WebSocket):
 async def get_websocket_stats():
     """Get WebSocket connection statistics"""
     return manager.get_connection_stats()
+
+# Police Station Routes
+@router.post("/police_stations", response_model=PoliceStationResponse, status_code=status.HTTP_201_CREATED)
+async def create_police_station(station: PoliceStationCreate, db: AsyncSession = Depends(get_db)):
+    try:
+        ps = PoliceStation(
+            name=station.name,
+            address=station.address,
+            phone=station.phone,
+            latitude=station.latitude,
+            longitude=station.longitude,
+            geom=f"SRID=4326;POINT({station.longitude} {station.latitude})"
+        )
+        db.add(ps)
+        await db.commit()
+        await db.refresh(ps)
+        return ps
+    except Exception as e:
+        logger.error(f"Error creating police station: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create police station")
+
+@router.get("/police_stations", response_model=PoliceStationListResponse)
+async def list_police_stations(skip: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=1000), db: AsyncSession = Depends(get_db)):
+    try:
+        count_result = await db.execute(select(func.count(PoliceStation.id)))
+        total = count_result.scalar()
+        result = await db.execute(
+            select(PoliceStation)
+            .where(PoliceStation.is_active == True)
+            .offset(skip).limit(limit)
+            .order_by(PoliceStation.created_at.desc())
+        )
+        stations = result.scalars().all()
+        return PoliceStationListResponse(stations=stations, total=total)
+    except Exception as e:
+        logger.error(f"Error listing police stations: {e}")
+        raise HTTPException(status_code=500, detail="Failed to list police stations")
+
+@router.get("/police_stations/nearest", response_model=PoliceStationListResponse)
+async def nearest_police_stations(
+    latitude: float = Query(..., ge=-90, le=90),
+    longitude: float = Query(..., ge=-180, le=180),
+    limit: int = Query(5, ge=1, le=50),
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        query = text(
+            """
+            SELECT id, name, address, phone, latitude, longitude,
+                   ST_Distance(geom::geography, ST_SetSRID(ST_Point(:lng, :lat), 4326)::geography) AS distance
+            FROM police_stations
+            WHERE is_active = true
+            ORDER BY distance ASC
+            LIMIT :limit
+            """
+        )
+        result = await db.execute(query, {"lng": longitude, "lat": latitude, "limit": limit})
+        rows = result.mappings().all()
+        stations = []
+        for r in rows:
+            stations.append({
+                "id": r["id"],
+                "name": r["name"],
+                "address": r["address"],
+                "phone": r["phone"],
+                "latitude": r["latitude"],
+                "longitude": r["longitude"],
+                "created_at": None,
+                "updated_at": None,
+                "is_active": True
+            })
+        return {"stations": stations, "total": len(stations)}
+    except Exception as e:
+        logger.error(f"Error fetching nearest police stations: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch nearest police stations")
+
+@router.put("/alerts/{alert_id}/assign", response_model=AlertResponse)
+async def assign_alert_to_station(
+    alert_id: int,
+    station_id: int = Query(..., ge=1),
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        alert_result = await db.execute(select(Alert).where(Alert.id == alert_id))
+        alert = alert_result.scalar_one_or_none()
+        if not alert:
+            raise HTTPException(status_code=404, detail="Alert not found")
+
+        ps_result = await db.execute(select(PoliceStation).where(PoliceStation.id == station_id))
+        station = ps_result.scalar_one_or_none()
+        if not station:
+            raise HTTPException(status_code=404, detail="Police station not found")
+
+        alert.assigned_station_id = station.id
+        alert.assigned_station_name = station.name
+        await db.commit()
+        await db.refresh(alert)
+        return alert
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error assigning alert to station: {e}")
+        raise HTTPException(status_code=500, detail="Failed to assign alert")

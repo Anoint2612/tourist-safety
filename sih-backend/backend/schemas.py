@@ -100,6 +100,8 @@ class AlertResponse(AlertBase):
     is_resolved: bool
     resolved_at: Optional[datetime]
     resolved_by: Optional[str]
+    assigned_station_id: Optional[int]
+    assigned_station_name: Optional[str]
     timestamp: datetime
     
     class Config:
@@ -108,6 +110,32 @@ class AlertResponse(AlertBase):
 class AlertUpdate(BaseModel):
     is_resolved: Optional[bool] = None
     resolved_by: Optional[str] = Field(None, max_length=255)
+    assigned_station_id: Optional[int] = None
+    assigned_station_name: Optional[str] = None
+
+# Police Station Schemas
+class PoliceStationBase(BaseModel):
+    name: str
+    address: Optional[str] = None
+    phone: Optional[str] = None
+    latitude: float
+    longitude: float
+
+class PoliceStationCreate(PoliceStationBase):
+    pass
+
+class PoliceStationResponse(PoliceStationBase):
+    id: int
+    is_active: bool
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+
+    class Config:
+        from_attributes = True
+
+class PoliceStationListResponse(BaseModel):
+    stations: List[PoliceStationResponse]
+    total: int
 
 # Response Schemas
 class LocationUpdateResponse(BaseModel):

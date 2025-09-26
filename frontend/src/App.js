@@ -6,6 +6,7 @@ import EFIRPage from "./pages/EFIRPage";
 import EFIRCreate from "./pages/EFIRCreate";
 import SOSPage from "./pages/SOSPage";
 import GeoPage from "./pages/GeoPage";
+import PolicePage from "./pages/PolicePage";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -22,6 +23,7 @@ function App() {
         <Route path="/efir/create" element={<ProtectedRoute><EFIRCreate /></ProtectedRoute>} />
         <Route path="/sos" element={<ProtectedRoute><SOSPage /></ProtectedRoute>} />
         <Route path="/geo" element={<ProtectedRoute><GeoPage /></ProtectedRoute>} />
+        <Route path="/police" element={<ProtectedRoute><PolicePage /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
