@@ -15,11 +15,19 @@ const LanguageSelection = ({ navigation }) => {
   }, []);
 
   // Handler to switch language and navigate
-  const handleSelect = (lang) => {
-    setLanguage(lang);
-    // Navigate to RegisterScreen after selection
-    if (navigation && typeof navigation.navigate === 'function') {
-      navigation.navigate('Register');
+  const handleSelect = async (lang) => {
+    try {
+      await setLanguage(lang);
+      // Navigate to RegisterScreen after language is set
+      if (navigation && typeof navigation.navigate === 'function') {
+        navigation.navigate('Register', { fromLanguageSelection: true });
+      }
+    } catch (error) {
+      console.error('Error setting language:', error);
+      // Still navigate even if language setting fails
+      if (navigation && typeof navigation.navigate === 'function') {
+        navigation.navigate('Register', { fromLanguageSelection: true });
+      }
     }
   };
 

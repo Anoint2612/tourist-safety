@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../hooks/useLanguage';
 import { useTranslation } from 'react-i18next';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput } from 'react-native';
 import { 
   Text, 
   useTheme, 
@@ -14,18 +14,34 @@ import {
   Switch,
   Divider,
   IconButton,
-  Chip
+  Chip,
+  Portal,
+  Modal,
+  HelperText,
+  TextInput as PaperTextInput
 } from 'react-native-paper';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
+import { MaterialIcons } from '@react-native-vector-icons/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { updatePreferences, updateProfile } from '../../store/reducers/userReducer';
+import { 
+  updatePreferences, 
+  updateProfile, 
+  addEmergencyContact, 
+  removeEmergencyContact, 
+  fetchUserData 
+} from '../../store/actions/userActions';
 import { logout } from '../../store/actions/authActions';
+import { CommonActions } from '@react-navigation/native';
 
 const ProfileScreen = ({ navigation }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
-  const { user } = useSelector(state => state.auth);
-  const { preferences, emergencyContacts } = useSelector(state => state.user);
+  const { user, isAuthenticated } = useSelector(state => state.auth);
+  console.log('ProfileScreen - User:', user, 'isAuthenticated:', isAuthenticated);
+  const { preferences } = useSelector(state => state.user);
+  
+  // Get emergency contacts from user object if available, otherwise from Redux
+  const emergencyContacts = user?.emergencyContacts || [];
   const { language, setLanguage } = useLanguage();
   const { t } = useTranslation();
 
@@ -36,6 +52,38 @@ const ProfileScreen = ({ navigation }) => {
     phone: user?.phone || '',
   });
   const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [showEmergencyModal, setShowEmergencyModal] = useState(false);
+  const [newContact, setNewContact] = useState({
+    name: '',
+    phone: '',
+    relation: ''
+  });
+  const [contactError, setContactError] = useState('');
+
+  // Load user data when component mounts
+  useEffect(() => {
+    console.log('ProfileScreen useEffect - user changed:', user);
+    if (user) {
+      setProfileData({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+      });
+      
+      // Only fetch user data if we don't have emergency contacts
+      if (!user.emergencyContacts || user.emergencyContacts.length === 0) {
+        console.log('Fetching user data including emergency contacts');
+        dispatch(fetchUserData());
+      }
+    } else {
+      console.log('No user data available in ProfileScreen');
+    }
+  }, [user, dispatch]);
+
+  // Debug: Log Redux state
+  useEffect(() => {
+    console.log('ProfileScreen - Full auth state:', { user, isAuthenticated });
+  }, [user, isAuthenticated]);
 
   const handleLogout = () => {
     Alert.alert(
@@ -48,10 +96,17 @@ const ProfileScreen = ({ navigation }) => {
           style: 'destructive',
           onPress: async () => {
             await dispatch(logout());
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'Auth' }],
-            });
+            try {
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [{ name: 'Auth' }],
+                })
+              );
+            } catch (error) {
+              console.error('Logout navigation error:', error);
+              navigation.navigate('Auth');
+            }
           }
         }
       ]
@@ -67,9 +122,81 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const handleProfileUpdate = () => {
-    dispatch(updateProfile(profileData));
-    setIsEditing(false);
-    Alert.alert('Success', 'Profile updated successfully');
+    dispatch(updateProfile(profileData))
+      .unwrap()
+      .then(() => {
+        setIsEditing(false);
+        Alert.alert('Success', 'Profile updated successfully');
+      })
+      .catch(error => {
+        console.error('Profile update failed:', error);
+        Alert.alert('Error', 'Failed to update profile. Please try again.');
+      });
+  };
+
+  const handleAddEmergencyContact = () => {
+    setContactError('');
+    
+    // Validate inputs
+    if (!newContact.name || !newContact.phone || !newContact.relation) {
+      setContactError('All fields are required');
+      return;
+    }
+    
+    // Validate phone number format
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(newContact.phone)) {
+      setContactError('Please enter a valid 10-digit phone number');
+      return;
+    }
+    
+    // Check if contact with same phone already exists
+    if (emergencyContacts?.some(contact => contact.phone === newContact.phone)) {
+      setContactError('A contact with this phone number already exists');
+      return;
+    }
+    
+    // Add the new contact
+    dispatch(addEmergencyContact({
+      name: newContact.name.trim(),
+      phone: newContact.phone.trim(),
+      relation: newContact.relation.trim()
+    }))
+    .unwrap()
+    .then(() => {
+      setShowEmergencyModal(false);
+      setNewContact({ name: '', phone: '', relation: '' });
+      Alert.alert('Success', 'Emergency contact added successfully');
+    })
+    .catch(error => {
+      console.error('Failed to add emergency contact:', error);
+      setContactError(error || 'Failed to add emergency contact');
+    });
+  };
+  
+  const handleRemoveEmergencyContact = (contactId) => {
+    Alert.alert(
+      'Remove Contact',
+      'Are you sure you want to remove this emergency contact?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            dispatch(removeEmergencyContact(contactId))
+              .unwrap()
+              .then(() => {
+                Alert.alert('Success', 'Emergency contact removed successfully');
+              })
+              .catch(error => {
+                console.error('Failed to remove emergency contact:', error);
+                Alert.alert('Error', 'Failed to remove emergency contact');
+              });
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -97,10 +224,10 @@ const ProfileScreen = ({ navigation }) => {
           
           <View style={styles.profileInfo}>
             <Title style={[styles.name, { color: theme.colors.text }]}>
-              {user?.name || 'User Name'}
+              {user?.name || 'mitesh'}
             </Title>
             <Paragraph style={[styles.email, { color: theme.colors.textSecondary }]}>
-              {user?.email || 'user@example.com'}
+              {user?.email || 'mitesh@gmail.com'}
             </Paragraph>
             <Chip 
               mode="outlined" 
@@ -140,34 +267,138 @@ const ProfileScreen = ({ navigation }) => {
         <Card.Content>
           <View style={styles.cardHeader}>
             <Title style={[styles.cardTitle, { color: theme.colors.primary }]}>
-              Emergency Contacts
+              {t('emergency_contacts') || 'Emergency Contacts'}
             </Title>
             <IconButton
               icon="plus"
               size={24}
-              onPress={() => console.log('Add contact')}
+              onPress={() => setShowEmergencyModal(true)}
             />
           </View>
           
-          {emergencyContacts?.map((contact, index) => (
-            <View key={index} style={styles.contactItem}>
-              <View style={styles.contactInfo}>
-                <Text style={[styles.contactName, { color: theme.colors.text }]}>
-                  {contact.name}
-                </Text>
-                <Text style={[styles.contactPhone, { color: theme.colors.textSecondary }]}>
-                  {contact.phone} • {contact.relation}
-                </Text>
+          {emergencyContacts?.length > 0 ? (
+            emergencyContacts.map((contact) => (
+              <View key={contact.id} style={styles.contactItem}>
+                <View style={styles.contactInfo}>
+                  <Text style={[styles.contactName, { color: theme.colors.text }]}>
+                    {contact.name}
+                  </Text>
+                  <View style={styles.contactDetails}>
+                    <Text style={[styles.contactPhone, { color: theme.colors.textSecondary }]}>
+                      {contact.phone}
+                    </Text>
+                    <Text style={[styles.contactRelation, { color: theme.colors.textSecondary }]}>
+                      • {contact.relation}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.contactActions}>
+                  <IconButton
+                    icon="phone"
+                    size={20}
+                    onPress={() => {
+                      // Handle phone call
+                      const phoneNumber = `tel:${contact.phone}`;
+                      Linking.canOpenURL(phoneNumber).then(supported => {
+                        if (supported) {
+                          Linking.openURL(phoneNumber);
+                        } else {
+                          Alert.alert('Error', 'Phone calls are not supported on this device');
+                        }
+                      });
+                    }}
+                  />
+                  <IconButton
+                    icon="trash-can-outline"
+                    size={20}
+                    onPress={() => handleRemoveEmergencyContact(contact.id)}
+                    iconColor={theme.colors.error}
+                  />
+                </View>
               </View>
-              <IconButton
-                icon="phone"
-                size={20}
-                onPress={() => console.log('Call contact')}
-              />
-            </View>
-          ))}
+            ))
+          ) : (
+            <Text style={[styles.noContacts, { color: theme.colors.textSecondary }]}>
+              {t('no_emergency_contacts') || 'No emergency contacts added'}
+            </Text>
+          )}
         </Card.Content>
       </Card>
+
+      {/* Add Emergency Contact Modal */}
+      <Portal>
+        <Modal 
+          visible={showEmergencyModal} 
+          onDismiss={() => {
+            setShowEmergencyModal(false);
+            setContactError('');
+            setNewContact({ name: '', phone: '', relation: '' });
+          }}
+          contentContainerStyle={[styles.modalContainer, { backgroundColor: theme.colors.background }]}
+        >
+          <Card style={{ width: '100%' }}>
+            <Card.Title 
+              title={t('add_emergency_contact') || 'Add Emergency Contact'}
+              titleStyle={{ color: theme.colors.primary }}
+              right={(props) => (
+                <IconButton
+                  {...props}
+                  icon="close"
+                  onPress={() => {
+                    setShowEmergencyModal(false);
+                    setContactError('');
+                    setNewContact({ name: '', phone: '', relation: '' });
+                  }}
+                />
+              )}
+            />
+            <Card.Content>
+              <PaperTextInput
+                label={t('name') || 'Name'}
+                value={newContact.name}
+                onChangeText={(text) => setNewContact({...newContact, name: text})}
+                style={styles.input}
+                mode="outlined"
+                left={<TextInput.Icon icon="account" />}
+              />
+              
+              <PaperTextInput
+                label={t('phone_number') || 'Phone Number'}
+                value={newContact.phone}
+                onChangeText={(text) => setNewContact({...newContact, phone: text})}
+                keyboardType="phone-pad"
+                style={styles.input}
+                mode="outlined"
+                left={<TextInput.Icon icon="phone" />}
+              />
+              
+              <PaperTextInput
+                label={t('relation') || 'Relation'}
+                value={newContact.relation}
+                onChangeText={(text) => setNewContact({...newContact, relation: text})}
+                style={styles.input}
+                mode="outlined"
+                left={<TextInput.Icon icon="account-group" />}
+              />
+              
+              {contactError ? (
+                <HelperText type="error" visible={!!contactError}>
+                  {contactError}
+                </HelperText>
+              ) : null}
+              
+              <Button 
+                mode="contained" 
+                onPress={handleAddEmergencyContact}
+                style={styles.addButton}
+                icon="account-plus"
+              >
+                {t('add_contact') || 'Add Contact'}
+              </Button>
+            </Card.Content>
+          </Card>
+        </Modal>
+      </Portal>
 
       {/* Settings */}
       <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}> 
@@ -308,6 +539,17 @@ const ProfileScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  modalContainer: {
+    padding: 20,
+    margin: 20,
+    borderRadius: 8,
+  },
+  input: {
+    marginBottom: 16,
+  },
+  addButton: {
+    marginTop: 8,
   },
   scrollContent: {
     padding: 16,

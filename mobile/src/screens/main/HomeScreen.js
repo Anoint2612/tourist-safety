@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, Image, TouchableOpacity, Alert, RefreshCo
 import { Text, Card, Title, Paragraph, Button, useTheme, Avatar, ActivityIndicator } from 'react-native-paper';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { useNavigation } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
 
 // Sample data - in a real app, this would come from your backend
 const sampleUser = {
@@ -29,15 +30,52 @@ const HomeScreen = () => {
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
 
-  // Simulate data loading
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setUserData(sampleUser);
-      setLoading(false);
-    }, 1000);
+    // Get auth state from Redux with memoized selectors
+  const user = useSelector(state => state.auth.user);
+  const isAuthenticated = useSelector(state => state.auth.isAuthenticated);
+  const authLoading = useSelector(state => state.auth.loading);
 
-    return () => clearTimeout(timer);
-  }, []);
+  // Load user data
+  useEffect(() => {
+    let isMounted = true;
+    
+    const loadUserData = async () => {
+      if (!isMounted) return;
+      
+      try {
+        // Only proceed if we're not loading and have auth state
+        if (authLoading) return;
+        
+        if (user) {
+          console.log('Setting user data from Redux:', user);
+          setUserData({
+            ...sampleUser,
+            name: user.name || 'User',
+            email: user.email || 'user@example.com',
+            ...(user.emergencyContacts && { emergencyContacts: user.emergencyContacts })
+          });
+        } else {
+          console.log('No user data in Redux, using sample data');
+          setUserData(sampleUser);
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        if (isMounted) {
+          setUserData(sampleUser);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadUserData();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [user, authLoading]);
 
   const onRefresh = () => {
     setRefreshing(true);

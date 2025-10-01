@@ -3,7 +3,9 @@ import {
   updateUserProfile, 
   updateUserPreferences, 
   uploadProfilePicture, 
-  fetchUserData 
+  fetchUserData,
+  addEmergencyContact,
+  removeEmergencyContact 
 } from '../actions/userActions';
 
 const initialState = {
@@ -117,6 +119,36 @@ const userSlice = createSlice({
       .addCase(fetchUserData.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+
+      // Add Emergency Contact
+      .addCase(addEmergencyContact.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(addEmergencyContact.fulfilled, (state, action) => {
+        state.loading = false;
+        state.emergencyContacts = [...state.emergencyContacts, action.payload];
+      })
+      .addCase(addEmergencyContact.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Remove Emergency Contact
+      .addCase(removeEmergencyContact.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(removeEmergencyContact.fulfilled, (state, action) => {
+        state.loading = false;
+        state.emergencyContacts = state.emergencyContacts.filter(
+          contact => contact.id !== action.payload
+        );
+      })
+      .addCase(removeEmergencyContact.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });
@@ -124,8 +156,6 @@ const userSlice = createSlice({
 export const {
   setProfile,
   setEmergencyContacts,
-  addEmergencyContact,
-  removeEmergencyContact,
   setSafetyScore,
   addSafetyHistory,
   clearError,

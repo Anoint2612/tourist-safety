@@ -9,6 +9,7 @@ import * as Yup from 'yup';
 import MaterialDesignIcons from '@react-native-vector-icons/material-design-icons';
 import {Ionicons} from '@react-native-vector-icons/ionicons'
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CommonActions } from '@react-navigation/native';
 // Selectors
 const selectAuthError = (state) => state.auth.error;
 const selectIsAuthenticated = (state) => state.auth.isAuthenticated;
@@ -58,10 +59,12 @@ const LoginScreen = ({ navigation }) => {
 
   const handleLogin = async (values, { setSubmitting, setFieldError }) => {
     try {
+      console.log('Login attempt with values:', values);
       const result = await dispatch(loginUser(values));
       
       if (loginUser.fulfilled.match(result)) {
         const { token, user } = result.payload;
+        console.log('Login successful, user:', user);
                 
         // Store token and user data
         await AsyncStorage.multiSet([
@@ -70,16 +73,54 @@ const LoginScreen = ({ navigation }) => {
         ]);
         
         // Navigate to main app
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'MainTabs' }],
-        });
+        try {
+          // Use a simpler navigation approach
+          const parentNavigation = navigation.getParent();
+          if (parentNavigation) {
+            parentNavigation.navigate('MainTabs');
+          } else {
+            navigation.navigate('MainTabs');
+          }
+        } catch (error) {
+          console.error('Navigation error:', error);
+          // Fallback navigation
+          navigation.navigate('MainTabs');
+        }
       } else if (loginUser.rejected.match(result)) {
-        setFieldError('form', result.payload || 'Login failed. Please check your credentials.');
+        console.log('Login rejected:', result.payload);
+        const errorMessage = result.payload || 'Login failed. Please check your credentials.';
+        
+        // Show alert to user
+        Alert.alert(
+          'Login Failed',
+          errorMessage,
+          [
+            { 
+              text: 'OK', 
+              onPress: () => console.log('User acknowledged login error'),
+              style: 'default' 
+            },
+            {
+              text: 'Register',
+              onPress: () => navigation.navigate('Register'),
+              style: 'cancel'
+            }
+          ]
+        );
+        
+        setFieldError('form', errorMessage);
       }
     } catch (error) {
       console.error('Login error:', error);
       const errorMessage = error.message || 'Login failed. Please check your credentials.';
+      
+      // Show alert for unexpected errors
+      Alert.alert(
+        'Error',
+        'An unexpected error occurred. Please try again.',
+        [{ text: 'OK' }]
+      );
+      
       setFieldError('form', errorMessage);
     } finally {
       setSubmitting(false);

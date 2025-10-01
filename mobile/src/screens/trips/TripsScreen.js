@@ -216,7 +216,7 @@ const TripsScreen = () => {
           onChangeText={setSearchQuery}
           value={searchQuery}
           style={[styles.searchBar, { backgroundColor: theme.colors.surface }]}
-          placeholderTextColor={theme.colors.placeholder}
+          placeholderTextColor={theme.colors.textSecondary}
           iconColor={theme.colors.primary}
           inputStyle={{ color: theme.colors.text }}
         />

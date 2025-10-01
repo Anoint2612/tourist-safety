@@ -15,46 +15,176 @@ const MapScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const mapRef = useRef(null);
   
-  const { currentLocation, isTracking, locationHistory, geofences } = useSelector(state => state.location);
+  const { currentLocation, isTracking, locationHistory, geofences, accuracy, speed, heading, lastUpdateTime } = useSelector(state => state.location);
   const { user } = useSelector(state => state.auth);
+
+  // Log location data when it changes
+  useEffect(() => {
+    console.log('Current Location:', {
+      coords: currentLocation,
+      accuracy,
+      speed,
+      heading,
+      lastUpdateTime,
+      isTracking
+    });
+    
+    if (locationHistory.length > 0) {
+      console.log('Last 5 location history entries:', 
+        locationHistory.slice(-5).map(entry => ({
+          coords: { latitude: entry.latitude, longitude: entry.longitude },
+          timestamp: entry.timestamp
+        }))
+      );
+    }
+    
+    console.log('Geofences:', geofences);
+  }, [currentLocation, locationHistory, geofences, accuracy, speed, heading, lastUpdateTime, isTracking]);
   
   const [region, setRegion] = useState({
-    latitude: 28.6139, // Delhi coordinates as default
-    longitude: 77.2090,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
+    latitude: 26.2006, // Center of Assam
+    longitude: 92.9376,
+    latitudeDelta: 2.0, // Wider view to see more of Assam
+    longitudeDelta: 2.0,
   });
   const [showGeofences, setShowGeofences] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
   const [permissionGranted, setPermissionGranted] = useState(false);
 
-  // Sample geofences data
+  // Sample geofences data around Assam
   const sampleGeofences = [
     {
       id: '1',
-      name: 'High Risk Area',
+      name: 'High Risk Area - Guwahati City Center',
       coordinates: [
-        { latitude: 28.6139, longitude: 77.2090 },
-        { latitude: 28.6149, longitude: 77.2100 },
-        { latitude: 28.6159, longitude: 77.2110 },
-        { latitude: 28.6169, longitude: 77.2120 },
+        { latitude: 26.1880, longitude: 91.7450 }, // NW
+        { latitude: 26.1880, longitude: 91.7850 }, // NE
+        { latitude: 26.1580, longitude: 91.7850 }, // SE
+        { latitude: 26.1580, longitude: 91.7450 }, // SW
       ],
       riskLevel: 'high',
       color: '#FF5722',
     },
     {
       id: '2',
-      name: 'Medium Risk Area',
+      name: 'Medium Risk Area - Jorhat',
       coordinates: [
-        { latitude: 28.6200, longitude: 77.2200 },
-        { latitude: 28.6210, longitude: 77.2210 },
-        { latitude: 28.6220, longitude: 77.2220 },
-        { latitude: 28.6230, longitude: 77.2230 },
+        { latitude: 26.7600, longitude: 94.2000 }, // NW
+        { latitude: 26.7600, longitude: 94.2400 }, // NE
+        { latitude: 26.7200, longitude: 94.2400 }, // SE
+        { latitude: 26.7200, longitude: 94.2000 }, // SW
       ],
       riskLevel: 'medium',
       color: '#FF9800',
     },
+    {
+      id: '3',
+      name: 'Low Risk Area - Kaziranga',
+      coordinates: [
+        { latitude: 26.4000, longitude: 93.2500 }, // NW
+        { latitude: 26.4000, longitude: 93.3500 }, // NE
+        { latitude: 26.3000, longitude: 93.3500 }, // SE
+        { latitude: 26.3000, longitude: 93.2500 }, // SW
+      ],
+      riskLevel: 'low',
+      color: '#4CAF50',
+    }
   ];
+
+  // Safety spots data (police stations, hospitals, etc.)
+  const safetySpots = [
+    // Police Stations
+    {
+      id: 'ps1',
+      type: 'police',
+      name: 'Guwahati Police Station',
+      coordinate: { latitude: 26.1445, longitude: 91.7362 },
+      description: '24/7 Emergency Services',
+      contact: '0361-2540135'
+    },
+    {
+      id: 'ps2',
+      type: 'police',
+      name: 'Dispur Police Station',
+      coordinate: { latitude: 26.1399, longitude: 91.7905 },
+      description: 'Women Safety Cell',
+      contact: '0361-2220280'
+    },
+    // Hospitals
+    {
+      id: 'h1',
+      type: 'hospital',
+      name: 'Gauhati Medical College',
+      coordinate: { latitude: 26.1459, longitude: 91.7352 },
+      description: '24/7 Emergency & Trauma Care',
+      contact: '0361-2529463'
+    },
+    {
+      id: 'h2',
+      type: 'hospital',
+      name: 'Hayat Hospital',
+      coordinate: { latitude: 26.0863, longitude: 91.5757 },
+      description: 'Multi-specialty Hospital',
+      contact: '0361-7120000'
+    },
+    // Tourist Police
+    {
+      id: 'tp1',
+      type: 'tourist_police',
+      name: 'Kaziranga Tourist Police',
+      coordinate: { latitude: 26.5739, longitude: 93.1735 },
+      description: 'Tourist Assistance Center',
+      contact: '0361-2540135'
+    },
+    // Fire Stations
+    {
+      id: 'fs1',
+      type: 'fire_station',
+      name: 'Guwahati Fire Station',
+      coordinate: { latitude: 26.1829, longitude: 91.7462 },
+      description: 'Emergency Fire Services',
+      contact: '101'
+    }
+  ];
+  
+  // Log the geofence details
+  useEffect(() => {
+    console.log('Geofences initialized:', sampleGeofences.map(fence => ({
+      id: fence.id,
+      name: fence.name,
+      bounds: {
+        minLat: Math.min(...fence.coordinates.map(c => c.latitude)),
+        maxLat: Math.max(...fence.coordinates.map(c => c.latitude)),
+        minLng: Math.min(...fence.coordinates.map(c => c.longitude)),
+        maxLng: Math.max(...fence.coordinates.map(c => c.longitude))
+      },
+      area: calculateArea(fence.coordinates) + ' km²'
+    })));
+  }, []);
+  
+  // Helper function to calculate area of a polygon in square kilometers
+  const calculateArea = (coordinates) => {
+    if (coordinates.length < 3) return 0;
+    
+    // Convert coordinates to radians
+    const coords = coordinates.map(coord => ({
+      lat: (coord.latitude * Math.PI) / 180,
+      lng: (coord.longitude * Math.PI) / 180
+    }));
+    
+    // Calculate area using spherical excess formula
+    let area = 0;
+    const R = 6371; // Earth's radius in km
+    
+    for (let i = 0; i < coords.length; i++) {
+      const j = (i + 1) % coords.length;
+      area += (coords[j].lng - coords[i].lng) * 
+              (2 + Math.sin(coords[i].lat) + Math.sin(coords[j].lat));
+    }
+    
+    area = Math.abs(area * R * R / 2);
+    return area.toFixed(2);
+  };
 
   useEffect(() => {
     requestLocationPermission();
@@ -106,6 +236,7 @@ const MapScreen = ({ navigation }) => {
         };
 
         dispatch(setCurrentLocation(locationData));
+        console.log("Location : ", locationData);
 
         // Update map region
         setRegion({
@@ -194,6 +325,7 @@ const MapScreen = ({ navigation }) => {
   };
 
   const centerOnUser = () => {
+    console.log("currentLocation :", currentLocation);
     if (currentLocation && mapRef.current) {
       mapRef.current.animateToRegion({
         latitude: currentLocation.latitude,
@@ -264,19 +396,43 @@ const MapScreen = ({ navigation }) => {
           />
         ))}
 
-        {/* Safety Zones (Police Stations, Hospitals) */}
-        <Marker
-          coordinate={{ latitude: 28.6149, longitude: 77.2099 }}
-          title="Police Station"
-          description="Emergency Services"
-          pinColor="#FF5722"
-        />
-        <Marker
-          coordinate={{ latitude: 28.6159, longitude: 77.2109 }}
-          title="Hospital"
-          description="Medical Emergency"
-          pinColor="#4CAF50"
-        />
+        {/* Safety Spots */}
+        {safetySpots.map(spot => (
+          <Marker
+            key={spot.id}
+            coordinate={spot.coordinate}
+            title={spot.name}
+            description={spot.description}
+            pinColor={{
+              police: '#2196F3',
+              hospital: '#4CAF50',
+              tourist_police: '#9C27B0',
+              fire_station: '#FF5722'
+            }[spot.type] || '#607D8B'}
+          >
+            <View style={styles.markerContainer}>
+              <View style={[
+                styles.markerBubble,
+                { 
+                  backgroundColor: {
+                    police: '#2196F3',
+                    hospital: '#4CAF50',
+                    tourist_police: '#9C27B0',
+                    fire_station: '#FF5722'
+                  }[spot.type] || '#607D8B'
+                }
+              ]}>
+                <Text style={styles.markerText}>
+                  {spot.type === 'police' ? '👮' : 
+                   spot.type === 'hospital' ? '🏥' :
+                   spot.type === 'tourist_police' ? '👮‍♂️' :
+                   '🚒'}
+                </Text>
+              </View>
+              <View style={styles.markerArrow} />
+            </View>
+          </Marker>
+        ))}
       </MapView>
 
       {/* Top Controls */}
@@ -351,13 +507,13 @@ const MapScreen = ({ navigation }) => {
               <View style={styles.infoRow}>
                 <Ionicons name="speedometer" size={16} color={theme.colors.primary} />
                 <Text style={[styles.infoText, { color: theme.colors.text }]}>
-                  Speed: {currentLocation.speed ? `${(currentLocation.speed * 3.6).toFixed(1)} km/h` : 'N/A'}
+                  Speed: {`${(speed * 3.6).toFixed(1)} km/h`}
                 </Text>
               </View>
               <View style={styles.infoRow}>
                 <Ionicons name="compass" size={16} color={theme.colors.primary} />
                 <Text style={[styles.infoText, { color: theme.colors.text }]}>
-                  Accuracy: {currentLocation.accuracy?.toFixed(0)}m
+                  Accuracy: {accuracy ? accuracy.toFixed(0) : 'N/A'}m
                 </Text>
               </View>
             </Card.Content>
@@ -378,7 +534,50 @@ const MapScreen = ({ navigation }) => {
   );
 };
 
+// Get appropriate emoji for each safety spot type
+const getSpotEmoji = (type) => {
+  switch(type) {
+    case 'police': return '👮';
+    case 'hospital': return '🏥';
+    case 'tourist_police': return '👮‍♂️';
+    case 'fire_station': return '🚒';
+    default: return '📍';
+  }
+};
+
 const styles = StyleSheet.create({
+  markerContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  markerBubble: {
+    flexDirection: 'row',
+    alignSelf: 'flex-start',
+    backgroundColor: '#FF5A5F',
+    padding: 8,
+    borderRadius: 20,
+    borderColor: '#FFFFFF',
+    borderWidth: 1,
+  },
+  markerText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  markerArrow: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderLeftWidth: 8,
+    borderRightWidth: 8,
+    borderTopWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#FF5A5F',
+    transform: [{ rotate: '180deg' }],
+    marginTop: -1,
+  },
   container: {
     flex: 1,
   },

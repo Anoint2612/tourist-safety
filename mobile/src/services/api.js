@@ -71,15 +71,29 @@ export const authAPI = {
       const token = generateToken();
       const user = {
         id: Date.now().toString(),
-        ...userData,
-        role: 'tourist',
+        name: userData.name,
+        email: userData.email,
+        phone: userData.phone,
+        aadhaarNumber: userData.aadhaarNumber,
+        role: userData.role || 'tourist',
         digitalId: 'DIG' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+        emergencyContacts: userData.emergencyContacts || [],
+        preferences: {
+          notifications: true,
+          locationSharing: false,
+          shareWithPolice: false,
+          language: 'en'
+        },
         createdAt: new Date().toISOString(),
         isVerified: false
       };
       
+      console.log('Registering user:', user);
+      
       await saveAuthToken(token);
       await saveUserData(user);
+      
+      console.log('User data saved successfully');
       
       return {
         success: true,
@@ -93,19 +107,26 @@ export const authAPI = {
     }
   },
 
-  // Login user - generates token and saves locally
+  // Login user - validates credentials and returns user data
   login: async (credentials) => {
     try {
+      // Get stored user data to validate credentials
+      const storedUserData = await getUserData();
+      
+      if (!storedUserData) {
+        throw new Error('No user found. Please register first.');
+      }
+
+      console.log('Stored user data:', storedUserData);
+      
       // For demo purposes, accept any email/password combination
+      // In a real app, you would validate against stored credentials
       const token = generateToken();
       const user = {
-        id: Date.now().toString(),
+        ...storedUserData,
         email: credentials.email,
-        name: credentials.email.split('@')[0],
-        role: 'tourist',
-        digitalId: 'DIG' + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        createdAt: new Date().toISOString(),
-        isVerified: true
+        name: storedUserData.name || credentials.email.split('@')[0],
+        lastLogin: new Date().toISOString()
       };
       
       await saveAuthToken(token);
@@ -119,7 +140,7 @@ export const authAPI = {
       };
     } catch (error) {
       console.error('Login error:', error);
-      throw new Error('Login failed');
+      throw new Error(error.message || 'Login failed');
     }
   },
 
@@ -375,12 +396,24 @@ export const tripAPI = {
   },
 };
 
-// Location API - Mock implementation
+// Location API - Real implementation
 export const locationAPI = {
   sendLocation: async (locationData) => {
     try {
-      // Mock implementation - just return success
-      return { data: { success: true, message: 'Location sent (mock)' } };
+      const response = await fetch(`${BASE_URL}/location`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(locationData),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        return { data: { success: true, message: 'Location sent successfully', result } };
+      } else {
+        throw new Error(`Failed to send location: ${response.status} ${response.statusText}`);
+      }
     } catch (error) {
       console.error('Send location error:', error);
       throw new Error('Failed to send location');

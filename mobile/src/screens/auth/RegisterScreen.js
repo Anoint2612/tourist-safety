@@ -35,6 +35,7 @@ import { clearError, registerUser } from '../../store/actions/authActions';
 import { authAPI } from '../../services/api';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
+import { CommonActions } from '@react-navigation/native';
 
 // Selectors
 const selectAuthError = (state) => state.auth.error;
@@ -103,13 +104,35 @@ const RegisterScreen = ({ navigation }) => {
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'MainTabs' }],
-      });
-    }
-  }, [isAuthenticated, navigation]);
+    const checkAuth = async () => {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        const userData = await AsyncStorage.getItem('userData');
+        
+        if (token && userData) {
+          // If we have a token and user data, dispatch setCredentials
+          dispatch({
+            type: 'auth/setCredentials',
+            payload: {
+              user: JSON.parse(userData),
+              token: token
+            }
+          });
+          
+          // Then navigate to main app
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'MainTabs' }],
+          });
+        }
+      } catch (error) {
+        console.error('Error checking auth state:', error);
+        // Continue to registration if there's an error
+      }
+    };
+    
+    checkAuth();
+  }, [isAuthenticated, navigation, dispatch]);
 
   // Clear any previous errors when component mounts
   useEffect(() => {
@@ -120,47 +143,75 @@ const RegisterScreen = ({ navigation }) => {
   useEffect(() => {
     if (authError) {
       console.error('Auth error:', authError);
+      // Clear the error after logging it
+      dispatch(clearError());
     }
-  }, [authError]);
+  }, [authError, dispatch]);
+  
+  // Handle initial navigation from LanguageSelection
+  useEffect(() => {
+    // Reset any previous errors when component mounts or when navigating to this screen
+    dispatch(clearError());
+    
+    // Set default role if not set
+    if (formikRef.current && !formikRef.current.values.role) {
+      formikRef.current.setFieldValue('role', 'tourist');
+      setSelectedRole('tourist');
+    }
+  }, [dispatch]);
 
   const handleSubmitForm = async (values, { setSubmitting, setFieldError }) => {
     console.log('Form submission started with values:', values);
     try {
       setSubmitting(true);
       
-      // Prepare user data for submission
-      const userData = {
-        ...values,
-        emergencyContacts: emergencyContacts
-      };
-      
-      console.log('Prepared user data for submission:', userData);
-
-      // Validate at least one emergency contact is added
+      // Validate emergency contacts
       if (emergencyContacts.length === 0) {
         setFieldError('form', 'Please add at least one emergency contact');
         setSubmitting(false);
         return;
       }
+      
+      // Validate all emergency contacts have required fields
+      const invalidContacts = emergencyContacts.some(contact => 
+        !contact.name || !contact.phone || !contact.relation
+      );
+      
+      if (invalidContacts) {
+        setFieldError('form', 'Please ensure all emergency contacts have name, phone, and relation');
+        setSubmitting(false);
+        return;
+      }
+      
+      // Prepare user data for submission with cleaned contacts
+      const userData = {
+        ...values,
+        emergencyContacts: emergencyContacts.map(contact => ({
+          name: contact.name.trim(),
+          phone: contact.phone.trim(),
+          relation: contact.relation.trim(),
+          id: contact.id,
+          createdAt: contact.createdAt || new Date().toISOString()
+        }))
+      };
+      
+      console.log('Prepared user data for submission:', userData);
 
       console.log('User data:', userData);
       const result = await dispatch(registerUser(userData));
       
       if (registerUser.fulfilled.match(result)) {
         const { token, user } = result.payload;
+        console.log('Registration successful, user:', user);
         
-        // Store token and user data
-        await AsyncStorage.multiSet([
-          ['userToken', token],
-          ['userData', JSON.stringify(user)]
-        ]);
-        
-        // Navigate to main app after successful registration
+        // The auth reducer will handle storing the token and user data
+        // Just navigate to the main app
         navigation.reset({
           index: 0,
           routes: [{ name: 'MainTabs' }],
         });
       } else if (registerUser.rejected.match(result)) {
+        console.log('Registration rejected:', result.payload);
         setFieldError('form', result.payload || 'Registration failed. Please try again.');
       }
     } catch (error) {
@@ -174,7 +225,33 @@ const RegisterScreen = ({ navigation }) => {
 
   const addEmergencyContactLocal = () => {
     if (newContact.name && newContact.phone && newContact.relation) {
-      setEmergencyContacts([...emergencyContacts, { ...newContact, id: Date.now() }]);
+      // Validate phone number format
+      const phoneRegex = /^[0-9]{10}$/;
+      if (!phoneRegex.test(newContact.phone)) {
+        Alert.alert('Error', 'Please enter a valid 10-digit phone number');
+        return;
+      }
+      
+      // Check if contact with same phone already exists
+      const contactExists = emergencyContacts.some(
+        contact => contact.phone === newContact.phone
+      );
+      
+      if (contactExists) {
+        Alert.alert('Error', 'A contact with this phone number already exists');
+        return;
+      }
+      
+      // Add the new contact with proper structure
+      const contactToAdd = {
+        id: Date.now().toString(),
+        name: newContact.name.trim(),
+        phone: newContact.phone.trim(),
+        relation: newContact.relation.trim(),
+        createdAt: new Date().toISOString()
+      };
+      
+      setEmergencyContacts([...emergencyContacts, contactToAdd]);
       setNewContact({ name: '', phone: '', relation: '' });
       setShowEmergencyForm(false);
     } else {
@@ -183,18 +260,23 @@ const RegisterScreen = ({ navigation }) => {
   };
 
   // Remove emergency contact field
-  const removeEmergencyContact = (index) => {
+  const removeEmergencyContact = (contactId) => {
     if (emergencyContacts.length > 1) {
-      const updatedContacts = [...emergencyContacts];
-      updatedContacts.splice(index, 1);
+      const updatedContacts = emergencyContacts.filter(contact => contact.id !== contactId);
       setEmergencyContacts(updatedContacts);
+    } else {
+      Alert.alert('Error', 'You must have at least one emergency contact');
     }
   };
 
   // Update emergency contact
-  const updateEmergencyContact = (index, field, value) => {
-    const updatedContacts = [...emergencyContacts];
-    updatedContacts[index] = { ...updatedContacts[index], [field]: value };
+  const updateEmergencyContact = (contactId, field, value) => {
+    const updatedContacts = emergencyContacts.map(contact => {
+      if (contact.id === contactId) {
+        return { ...contact, [field]: value };
+      }
+      return contact;
+    });
     setEmergencyContacts(updatedContacts);
   };
 

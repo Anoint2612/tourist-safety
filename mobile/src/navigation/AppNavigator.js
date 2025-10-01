@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
+import { View, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useTheme } from 'react-native-paper';
+import { useTheme, Button } from 'react-native-paper';
+import { useSelector, useDispatch } from 'react-redux';
+import { loginUser } from '../store/actions/authActions';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 // Import screens
 import SplashScreen from '../screens/SplashScreen';
@@ -25,7 +29,6 @@ import EFIRListScreen from '../screens/efir/EFIRListScreen';
 
 // Import components
 import CustomHeader from '../components/common/CustomHeader';
-import { View, Text } from 'react-native'
 
 // Create navigators
 const Stack = createNativeStackNavigator();
@@ -149,63 +152,211 @@ const EFIRStack = () => (
 
 // Main App Navigator
 const AppNavigator = () => {
+  const dispatch = useDispatch();
+  const { user, isAuthenticated, loading: authLoading } = useSelector(state => state.auth);
   const [isLoading, setIsLoading] = React.useState(true);
-  const [userToken, setUserToken] = React.useState(null);
+  const [currentRoute, setCurrentRoute] = React.useState(null);
+  const [hasError, setHasError] = React.useState(false);
   const theme = useTheme();
 
   // Check if user is logged in
   React.useEffect(() => {
+    let isMounted = true;
+    
     const bootstrapAsync = async () => {
       try {
-        const token = await AsyncStorage.getItem('userToken');
-        setUserToken(token);
+        const [token, userData] = await Promise.all([
+          AsyncStorage.getItem('userToken'),
+          AsyncStorage.getItem('userData')
+        ]);
+        
+        console.log('Bootstrap - Token:', !!token, 'UserData:', !!userData);
+        
+        // Only try to log in if both token and user data exist
+        if (token && userData) {
+          try {
+            const parsedUser = JSON.parse(userData);
+            console.log('User data loaded:', parsedUser);
+            // Dispatch login success action
+            dispatch(loginUser.fulfilled({ 
+              token, 
+              user: parsedUser 
+            }));
+          } catch (e) {
+            console.error('Failed to parse user data', e);
+            // Clear invalid data
+            await AsyncStorage.multiRemove(['userToken', 'userData']);
+          }
+        } else if (token || userData) {
+          // If only one of them exists, clear both to prevent inconsistencies
+          await AsyncStorage.multiRemove(['userToken', 'userData']);
+        }
+        
+        if (isMounted) {
+          setHasError(false);
+          setIsLoading(false);
+        }
       } catch (e) {
-        console.error('Failed to load user token', e);
-      } finally {
-        setIsLoading(false);
+        console.error('Failed to load user data', e);
+        if (isMounted) {
+          setHasError(true);
+          setIsLoading(false);
+        }
       }
     };
 
     bootstrapAsync();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [dispatch]);
+
+  // Handle navigation state changes
+  React.useEffect(() => {
+    console.log('Navigation state changed:', { isAuthenticated, currentRoute, isLoading });
+    
+    // Don't proceed if still loading
+    if (isLoading || authLoading) {
+      return;
+    }
+    
+    // Add a small delay to prevent race conditions
+    const timeoutId = setTimeout(() => {
+      if (isAuthenticated && (currentRoute === 'MainTabs' || currentRoute === null)) {
+        // Set current route to MainTabs if authenticated
+        setCurrentRoute('MainTabs');
+      } else if (!isAuthenticated || currentRoute === 'Auth') {
+        // Set current route to Auth if not authenticated
+        setCurrentRoute('Auth');
+      }
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [isAuthenticated, currentRoute, isLoading, authLoading]);
+
+  // Set initial route when authentication state changes
+  React.useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (isAuthenticated) {
+        setCurrentRoute('MainTabs');
+      } else {
+        setCurrentRoute('Auth');
+      }
+    }, 200);
+
+    return () => clearTimeout(timeoutId);
+  }, [isAuthenticated]);
+
+  // Cleanup on unmount
+  React.useEffect(() => {
+    return () => {
+      LocationTrackingService.stopTracking();
+    };
   }, []);
 
   // Show splash screen while loading
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return <SplashScreen />;
   }
 
+  // Show error screen if there's an error
+  if (hasError) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <Text style={{ fontSize: 18, marginBottom: 16, textAlign: 'center' }}>
+          Something went wrong. Please restart the app.
+        </Text>
+        <Button
+          mode="contained"
+          onPress={() => {
+            setHasError(false);
+            setIsLoading(true);
+            // Retry bootstrap
+            bootstrapAsync()
+              .catch(e => {
+                console.error('Retry failed:', e);
+                setHasError(true);
+              })
+              .finally(() => {
+                setIsLoading(false);
+              });
+          }}
+        >
+          Try Again
+        </Button>
+      </View>
+    );
+  }
+
+  // Handle navigation state changes
+  const handleNavigationStateChange = (state) => {
+    try {
+      if (state) {
+        const routeName = getActiveRouteName(state);
+        console.log('Navigation state change detected:', routeName);
+        setCurrentRoute(routeName);
+      }
+    } catch (error) {
+      console.error('Error handling navigation state change:', error);
+    }
+  };
+
+  // Helper function to get active route name
+  const getActiveRouteName = (state) => {
+    try {
+      if (!state || !state.routes || state.routes.length === 0) {
+        return null;
+      }
+      
+      const route = state.routes[state.index];
+      if (route && route.state) {
+        return getActiveRouteName(route.state);
+      }
+      return route ? route.name : null;
+    } catch (error) {
+      console.error('Error getting active route name:', error);
+      return null;
+    }
+  };
+
   return (
-    <NavigationContainer theme={{
-      ...theme,
-      colors: {
-        ...theme.colors,
-        primary: theme.colors.primary,
-        background: theme.colors.background,
-        card: theme.colors.surface,
-        text: theme.colors.text,
-        border: theme.colors.border,
-        notification: theme.colors.notification,
-      },
-    }}>
-      <RootStack.Navigator initialRouteName={userToken ? 'MainTabs' : 'Auth'}
+    <ErrorBoundary>
+      <NavigationContainer 
+        theme={{
+          ...theme,
+          colors: {
+            ...theme.colors,
+            primary: theme.colors.primary,
+            background: theme.colors.background,
+            card: theme.colors.surface,
+            text: theme.colors.text,
+            border: theme.colors.border,
+            notification: theme.colors.notification,
+          },
+        }}
+        onStateChange={handleNavigationStateChange}
+      >
+      <RootStack.Navigator initialRouteName={isAuthenticated ? 'MainTabs' : 'Auth'}
         screenOptions={{
           headerStyle: {
             backgroundColor: theme.colors.primary,
           },
-          headerTintColor: theme.colors.surface,
+          headerTintColor: '#fff',
           headerTitleStyle: {
             fontWeight: 'bold',
           },
-          headerBackTitleVisible: false,
-          animation: 'slide_from_right',
+          cardStyle: {
+            backgroundColor: theme.colors.background,
+          },
         }}
       >
-        <RootStack.Screen
-          name="Auth"
+        <RootStack.Screen 
+          name="Auth" 
           component={AuthStack}
           options={{ 
             headerShown: false,
-            animationTypeForReplace: userToken ? 'push' : 'pop',
+            animationTypeForReplace: isAuthenticated ? 'push' : 'pop',
           }}
         />
         <RootStack.Screen
@@ -255,6 +406,7 @@ const AppNavigator = () => {
         </RootStack.Group>
       </RootStack.Navigator>
     </NavigationContainer>
+    </ErrorBoundary>
   );
 };
 

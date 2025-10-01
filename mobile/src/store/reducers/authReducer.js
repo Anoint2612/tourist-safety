@@ -51,6 +51,14 @@ const authSlice = createSlice({
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.error = null;
+      
+      // Save to AsyncStorage for persistence
+      AsyncStorage.multiSet([
+        ['userToken', action.payload.token],
+        ['userData', JSON.stringify(action.payload.user)]
+      ]).catch(error => {
+        console.error('Error saving auth data:', error);
+      });
     });
     builder.addCase(registerUser.rejected, (state, action) => {
       state.loading = false;
@@ -58,6 +66,9 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.error = action.payload || 'Registration failed';
+      
+      // Clear any partial data on registration failure
+      AsyncStorage.multiRemove(['userToken', 'userData']).catch(console.error);
     });
 
     // Handle login
@@ -68,8 +79,10 @@ const authSlice = createSlice({
     builder.addCase(loginUser.fulfilled, (state, action) => {
       state.loading = false;
       state.isAuthenticated = true;
-      state.user = action.payload.user;
-      state.token = action.payload.token;
+      // Handle both direct payload and payload wrapped in payload property
+      const payload = action.payload || {};
+      state.user = payload.user || payload;
+      state.token = payload.token || payload.accessToken;
       state.error = null;
     });
     builder.addCase(loginUser.rejected, (state, action) => {

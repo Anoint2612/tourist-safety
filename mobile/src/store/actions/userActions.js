@@ -62,11 +62,27 @@ export const uploadProfilePicture = createAsyncThunk(
 // Async thunk for fetching user data
 export const fetchUserData = createAsyncThunk(
   'user/fetchData',
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, dispatch }) => {
     try {
       const response = await userAPI.getProfile();
-      return response.data;
+      
+      // Ensure emergencyContacts is an array
+      const userData = {
+        ...response.data,
+        emergencyContacts: Array.isArray(response.data.emergencyContacts) 
+          ? response.data.emergencyContacts 
+          : []
+      };
+      
+      // Update the auth user data with the latest info including emergency contacts
+      dispatch({
+        type: 'auth/updateUser',
+        payload: userData
+      });
+      
+      return userData;
     } catch (error) {
+      console.error('Failed to fetch user data:', error);
       return rejectWithValue(error.message || 'Failed to fetch user data');
     }
   }

@@ -1,5 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { authAPI } from '../../services/api';
 
 // Simple token generation function
 const generateToken = () => {
@@ -48,30 +49,19 @@ export const registerUser = createAsyncThunk(
   'auth/register',
   async (userData, { rejectWithValue }) => {
     try {
-      const token = generateToken();
-      const user = {
-        id: Date.now().toString(),
-        ...userData,
-        role: 'tourist',
-        digitalId: 'DIG' + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        createdAt: new Date().toISOString(),
-        isVerified: false,
-        preferences: {
-          notifications: true,
-          locationSharing: false,
-          shareWithPolice: false,
-        },
-        emergencyContacts: []
-      };
+      console.log('Registering user with data:', userData);
+      const result = await authAPI.register(userData);
       
-      await saveAuthToken(token);
-      await saveUserData(user);
-      
-      return {
-        token,
-        user,
-        message: 'Registration successful'
-      };
+      if (result.success) {
+        console.log('Registration successful:', result);
+        return {
+          token: result.token,
+          user: result.user,
+          message: result.message
+        };
+      } else {
+        return rejectWithValue(result.message || 'Registration failed');
+      }
     } catch (error) {
       console.error('Registration error:', error);
       return rejectWithValue(error.message || 'Registration failed');
@@ -84,35 +74,38 @@ export const loginUser = createAsyncThunk(
   'auth/login',
   async (credentials, { rejectWithValue }) => {
     try {
-      // For demo purposes, accept any email/password combination
-      const token = generateToken();
-      const user = {
-        id: Date.now().toString(),
-        email: credentials.email,
-        name: credentials.email.split('@')[0],
-        role: 'tourist',
-        digitalId: 'DIG' + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        createdAt: new Date().toISOString(),
-        isVerified: true,
-        preferences: {
-          notifications: true,
-          locationSharing: false,
-          shareWithPolice: false,
-        },
-        emergencyContacts: []
-      };
+      console.log('Logging in user with credentials:', credentials);
+      const result = await authAPI.login(credentials);
       
-      await saveAuthToken(token);
-      await saveUserData(user);
-      
-      return {
-        token,
-        user,
-        message: 'Login successful'
-      };
+      if (result.success) {
+        if (!result.user) {
+          console.warn('Login successful but no user data returned');
+          return rejectWithValue('Invalid user data received. Please try again.');
+        }
+        
+        console.log('Login successful:', result);
+        return {
+          token: result.token || generateToken(),
+          user: result.user,
+          message: result.message || 'Login successful'
+        };
+      } else {
+        // Handle specific error messages from the API
+        const errorMessage = result.message || 'Login failed';
+        const friendlyMessage = errorMessage.includes('No user found') 
+          ? 'No account found with this email. Please register first.'
+          : errorMessage;
+          
+        return rejectWithValue(friendlyMessage);
+      }
     } catch (error) {
       console.error('Login error:', error);
-      return rejectWithValue(error.message || 'Login failed');
+      const errorMessage = error.message || 'Login failed';
+      const friendlyMessage = errorMessage.includes('No user found') 
+        ? 'No account found with this email. Please register first.'
+        : 'An error occurred during login. Please check your credentials and try again.';
+        
+      return rejectWithValue(friendlyMessage);
     }
   }
 );

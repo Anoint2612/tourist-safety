@@ -4,7 +4,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const getUserData = async () => {
   try {
     const userData = await AsyncStorage.getItem('userData');
-    return userData ? JSON.parse(userData) : null;
+    if (!userData) return null;
+    
+    const parsedData = JSON.parse(userData);
+    // Ensure emergencyContacts is always an array
+    if (!Array.isArray(parsedData.emergencyContacts)) {
+      parsedData.emergencyContacts = [];
+    }
+    return parsedData;
   } catch (error) {
     console.error('Error getting user data:', error);
     return null;
@@ -28,9 +35,23 @@ const userAPI = {
     try {
       const user = await getUserData();
       if (!user) {
-        throw new Error('User not found');
+        // Return a default user structure if no user exists yet
+        return { 
+          data: { 
+            profile: null, 
+            emergencyContacts: [],
+            preferences: {}
+          } 
+        };
       }
-      return { data: user };
+      
+      // Ensure we return a consistent structure
+      return { 
+        data: {
+          ...user,
+          emergencyContacts: user.emergencyContacts || []
+        } 
+      };
     } catch (error) {
       console.error('Get profile error:', error);
       throw new Error('Failed to fetch profile');
@@ -101,11 +122,8 @@ const userAPI = {
   getEmergencyContacts: async () => {
     try {
       const user = await getUserData();
-      if (!user) {
-        throw new Error('User not found');
-      }
-      
-      return { data: { contacts: user.emergencyContacts || [] } };
+      const contacts = user?.emergencyContacts || [];
+      return { data: { contacts } };
     } catch (error) {
       console.error('Get emergency contacts error:', error);
       throw new Error('Failed to fetch emergency contacts');
@@ -115,27 +133,46 @@ const userAPI = {
   // Add emergency contact to local storage
   addEmergencyContact: async (contact) => {
     try {
-      const currentUser = await getUserData();
-      if (!currentUser) {
-        throw new Error('User not found');
+      let currentUser = await getUserData() || {};
+      
+      // Ensure emergencyContacts exists as an array
+      if (!Array.isArray(currentUser.emergencyContacts)) {
+        currentUser.emergencyContacts = [];
       }
       
-      const newContact = {
-        id: Date.now().toString(),
-        ...contact,
-        createdAt: new Date().toISOString()
-      };
+      // Check if contact with same phone already exists
+      const existingContactIndex = currentUser.emergencyContacts.findIndex(
+        c => c.phone === contact.phone
+      );
       
-      const emergencyContacts = currentUser.emergencyContacts || [];
-      emergencyContacts.push(newContact);
+      let newContact;
       
-      const updatedUser = { ...currentUser, emergencyContacts };
-      await saveUserData(updatedUser);
+      if (existingContactIndex >= 0) {
+        // Update existing contact
+        newContact = {
+          ...currentUser.emergencyContacts[existingContactIndex],
+          ...contact,
+          updatedAt: new Date().toISOString()
+        };
+        currentUser.emergencyContacts[existingContactIndex] = newContact;
+      } else {
+        // Add new contact
+        newContact = {
+          id: Date.now().toString(),
+          ...contact,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        currentUser.emergencyContacts.push(newContact);
+      }
+      
+      // Save the updated user data
+      await saveUserData(currentUser);
       
       return { data: { contact: newContact } };
     } catch (error) {
-      console.error('Add emergency contact error:', error);
-      throw new Error('Failed to add emergency contact');
+      console.error('Add/Update emergency contact error:', error);
+      throw new Error('Failed to add/update emergency contact');
     }
   },
 
@@ -147,12 +184,24 @@ const userAPI = {
         throw new Error('User not found');
       }
       
-      const emergencyContacts = (currentUser.emergencyContacts || []).filter(
+      // Ensure emergencyContacts exists as an array
+      if (!Array.isArray(currentUser.emergencyContacts)) {
+        currentUser.emergencyContacts = [];
+      }
+      
+      // Filter out the contact to remove
+      const updatedContacts = currentUser.emergencyContacts.filter(
         contact => contact.id !== contactId
       );
       
-      const updatedUser = { ...currentUser, emergencyContacts };
-      await saveUserData(updatedUser);
+      // Only update if something changed
+      if (updatedContacts.length !== currentUser.emergencyContacts.length) {
+        const updatedUser = { 
+          ...currentUser, 
+          emergencyContacts: updatedContacts 
+        };
+        await saveUserData(updatedUser);
+      }
       
       return { data: { success: true } };
     } catch (error) {

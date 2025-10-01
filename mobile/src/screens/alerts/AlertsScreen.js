@@ -207,6 +207,7 @@ const AlertsScreen = () => {
         onChangeText={setSearchQuery}
         value={searchQuery}
         style={[styles.searchBar, { backgroundColor: theme.colors.surface }]}
+        placeholderTextColor={theme.colors.textSecondary}
       />
 
       <View style={styles.filterContainer}>

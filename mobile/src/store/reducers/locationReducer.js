@@ -3,7 +3,7 @@ import { createSlice } from '@reduxjs/toolkit';
 const initialState = {
   currentLocation: null,
   locationHistory: [],
-  isTracking: false,
+  isTracking: true,
   lastUpdateTime: null,
   accuracy: null,
   speed: null,

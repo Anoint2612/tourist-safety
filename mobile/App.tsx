@@ -7,6 +7,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from './src/store';
 import AppNavigator from './src/navigation/AppNavigator';
 import { theme } from './src/theme';
+import LocationTrackerInitializer from './src/components/LocationTrackerInitializer';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -20,6 +21,7 @@ function App() {
               barStyle={isDarkMode ? 'light-content' : 'dark-content'} 
               backgroundColor={theme.colors.primary}
             />
+            <LocationTrackerInitializer />
             <AppNavigator />
           </PaperProvider>
         </SafeAreaProvider>
