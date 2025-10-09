@@ -110,16 +110,16 @@ The system integrates **AI/ML**, **blockchain audit trails**, and **role-based w
 ## Project Screenshots
 Here’s what the app looks like:
 
-![App Screenshot](https://github.com/Anoint2612/TOURIST-SAFETY/assets/Tourist_Dashboard)
-![App Screenshot](https://github.com/Anoint2612/TOURIST-SAFETY/assets/Tracking)
-![App Screenshot](https://github.com/Anoint2612/TOURIST-SAFETY/assets/Tourist_Dashboard/Alert_APP)
+![App Screenshot](assets/Tourist_Dashboard.png)
+![App Screenshot](assets/Tracking.png)
+![App Screenshot](assets/Tourist_Dashboard/Alert_APP.png)
 
 Admin Side
-![App Screenshot](https://github.com/Anoint2612/TOURIST-SAFETY/assets/Tourist_Dashboard/Admin_Dash)
-![App Screenshot](https://github.com/Anoint2612/TOURIST-SAFETY/assets/Tourist_Dashboard/Alert_ADmin)
-![App Screenshot](https://github.com/Anoint2612/TOURIST-SAFETY/assets/Tourist_Dashboard/E-FIR)
-![App Screenshot](https://github.com/Anoint2612/TOURIST-SAFETY/assets/Tourist_Dashboard/SOS_Map)
-![App Screenshot](https://github.com/Anoint2612/TOURIST-SAFETY/assets/Tourist_Dashboard/Polygon)
+![App Screenshot](assets/Tourist_Dashboard/Admin_Dash.png)
+![App Screenshot](assets/Tourist_Dashboard/Alert_ADmin.png)
+![App Screenshot](assets/Tourist_Dashboard/E-FIR.png)
+![App Screenshot](assets/Tourist_Dashboard/SOS_Map.png)
+![App Screenshot](assets/Tourist_Dashboard/Polygon.png)
 
 ---
 
