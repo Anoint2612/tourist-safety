@@ -107,19 +107,20 @@ The system integrates **AI/ML**, **blockchain audit trails**, and **role-based w
 * Regional growth in under-visited tourist regions
 
 ---
-## Project Screenshots
-Here’s what the app looks like:
+## 📷 Project Screenshots
+### Here’s what the app looks like:
 
-![App Screenshot](assets/Tourist_Dashboard.png)
-![App Screenshot](assets/Tracking.png)
-![App Screenshot](assets/Tourist_Dashboard/Alert_APP.png)
+![App Screenshot](../tourist-safety/assets/Tourist_Dashboard.png)
+![App Screenshot](../tourist-safety/assets/Tracking.png)
+![App Screenshot](../tourist-safety/assets/Alert_APP.png)
 
-Admin Side
-![App Screenshot](assets/Tourist_Dashboard/Admin_Dash.png)
-![App Screenshot](assets/Tourist_Dashboard/Alert_ADmin.png)
-![App Screenshot](assets/Tourist_Dashboard/E-FIR.png)
-![App Screenshot](assets/Tourist_Dashboard/SOS_Map.png)
-![App Screenshot](assets/Tourist_Dashboard/Polygon.png)
+### Admin Side  
+
+![App Screenshot](../tourist-safety/assets/Admin_Dash.png)
+![App Screenshot](../tourist-safety/assets/Alert_ADmin.png)
+![App Screenshot](../tourist-safety/assets/E-FIR.png)
+![App Screenshot](../tourist-safety/assets/SOS_Map.png)
+![App Screenshot](../tourist-safety/assets/Polygon.png)
 
 ---
 
