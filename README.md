@@ -107,6 +107,9 @@ The system integrates **AI/ML**, **blockchain audit trails**, and **role-based w
 * Regional growth in under-visited tourist regions
 
 ---
+## Project Screenshots
+
+---
 
 ## 🔬 Research & References
 
